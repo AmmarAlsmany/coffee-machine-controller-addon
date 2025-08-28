@@ -5,7 +5,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'your-secret-key-here'
 DEBUG = True
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0', 'xrqlxhrnom02wtf3cfz3odga9u80vpyc.ui.nabu.casa']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -75,6 +75,7 @@ REST_FRAMEWORK = {
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "http://xrqlxhrnom02wtf3cfz3odga9u80vpyc.ui.nabu.casa:3000",
 ]
 
 # Static files
