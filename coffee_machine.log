@@ -1,0 +1,27 @@
+Coffee machine initialized on port /dev/ttyUSB0 at 9600 bps
+Coffee machine controller initialized
+Coffee machine initialized on port COM4 at 9600 bps
+Connection error: name 'serial' is not defined
+Disconnected from coffee machine
+Coffee machine initialized on port /dev/ttyUSB0 at 9600 bps
+Coffee machine controller initialized
+Coffee machine initialized on port COM4 at 9600 bps
+Connection error: name 'serial' is not defined
+Disconnected from coffee machine
+Coffee machine initialized on port /dev/ttyUSB0 at 9600 bps
+Coffee machine controller initialized
+Coffee machine initialized on port COM4 at 9600 bps
+Connection error: name 'serial' is not defined
+Disconnected from coffee machine
+Coffee machine initialized on port /dev/ttyUSB0 at 9600 bps
+Coffee machine controller initialized
+Coffee machine initialized on port /dev/ttyUSB0 at 9600 bps
+Coffee machine controller initialized
+Error getting delivery history: no such table: machine_coffeedelivery
+Error getting maintenance logs: no such table: machine_maintenancelog
+Coffee machine initialized on port /dev/ttyUSB0 at 9600 bps
+Coffee machine controller initialized
+Coffee machine initialized on port /dev/ttyUSB0 at 9600 bps
+Coffee machine controller initialized
+Coffee machine initialized on port /dev/ttyUSB0 at 9600 bps
+Coffee machine controller initialized

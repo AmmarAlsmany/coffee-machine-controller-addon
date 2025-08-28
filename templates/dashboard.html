@@ -1,0 +1,462 @@
+<!-- templates/dashboard.html -->
+{% extends "base.html" %}
+
+{% block title %}Coffee Machine Dashboard - Coffee Machine Controller{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Machine Information -->
+    <div class="col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>Machine Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tbody>
+                        <tr>
+                            <td><strong>Serial Number:</strong></td>
+                            <td id="serialNumber">Loading...</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Firmware Version:</strong></td>
+                            <td id="firmwareVersion">Loading...</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Number of Groups:</strong></td>
+                            <td id="numberOfGroups">Loading...</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Machine Blocked:</strong></td>
+                            <td>
+                                <span id="machineBlocked" class="badge bg-secondary">Loading...</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div class="d-grid gap-2 mt-3">
+                    <button id="connectBtn" class="btn btn-coffee">
+                        <i class="fas fa-plug me-2"></i>
+                        <span class="btn-text">Connect</span>
+                        <div class="spinner-border spinner-border-sm ms-2 loading" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </button>
+                    <button id="disconnectBtn" class="btn btn-outline-danger" style="display: none;">
+                        <i class="fas fa-unlink me-2"></i>
+                        <span class="btn-text">Disconnect</span>
+                        <div class="spinner-border spinner-border-sm ms-2 loading" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </button>
+                    <button id="healthCheckBtn" class="btn btn-outline-info">
+                        <i class="fas fa-heart-pulse me-2"></i>
+                        <span class="btn-text">Health Check</span>
+                        <div class="spinner-border spinner-border-sm ms-2 loading" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Coffee Groups Control -->
+    <div class="col-lg-8 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-coffee me-2"></i>Coffee Groups Control
+                </h5>
+            </div>
+            <div class="card-body">
+                <!-- Group 1 -->
+                <div class="coffee-group">
+                    <div class="row align-items-center mb-3">
+                        <div class="col-md-3">
+                            <h6 class="mb-1">
+                                <i class="fas fa-circle-1 me-2"></i>Group 1
+                            </h6>
+                            <div id="group1Status" class="small text-muted">
+                                <span class="status-indicator status-disconnected"></span>
+                                Not Connected
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted">Purge Countdown:</small>
+                            <div id="group1Countdown" class="fw-bold">--</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-outline-warning btn-sm stop-btn" data-group="1">
+                                    <i class="fas fa-stop me-1"></i>Stop
+                                    <div class="spinner-border spinner-border-sm ms-1 loading" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </button>
+                                <button class="btn btn-outline-info btn-sm purge-btn" data-group="1">
+                                    <i class="fas fa-shower me-1"></i>Purge
+                                    <div class="spinner-border spinner-border-sm ms-1 loading" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="coffee-buttons">
+                        <button class="btn btn-coffee btn-sm coffee-btn" data-group="1" data-type="single_short">
+                            <i class="fas fa-coffee me-1"></i>
+                            <span class="btn-text">Single Short</span>
+                            <div class="spinner-border spinner-border-sm ms-1 loading" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </button>
+                        <button class="btn btn-coffee btn-sm coffee-btn" data-group="1" data-type="single_medium">
+                            <i class="fas fa-coffee me-1"></i>
+                            <span class="btn-text">Single Medium</span>
+                            <div class="spinner-border spinner-border-sm ms-1 loading" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </button>
+                        <button class="btn btn-coffee btn-sm coffee-btn" data-group="1" data-type="single_long">
+                            <i class="fas fa-coffee me-1"></i>
+                            <span class="btn-text">Single Long</span>
+                            <div class="spinner-border spinner-border-sm ms-1 loading" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </button>
+                        <button class="btn btn-coffee btn-sm coffee-btn" data-group="1" data-type="double_short">
+                            <i class="fas fa-coffee me-1"></i><i class="fas fa-coffee me-1"></i>
+                            <span class="btn-text">Double Short</span>
+                            <div class="spinner-border spinner-border-sm ms-1 loading" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </button>
+                        <button class="btn btn-coffee btn-sm coffee-btn" data-group="1" data-type="double_medium">
+                            <i class="fas fa-coffee me-1"></i><i class="fas fa-coffee me-1"></i>
+                            <span class="btn-text">Double Medium</span>
+                            <div class="spinner-border spinner-border-sm ms-1 loading" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </button>
+                        <button class="btn btn-coffee btn-sm coffee-btn" data-group="1" data-type="double_long">
+                            <i class="fas fa-coffee me-1"></i><i class="fas fa-coffee me-1"></i>
+                            <span class="btn-text">Double Long</span>
+                            <div class="spinner-border spinner-border-sm ms-1 loading" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Group 2 -->
+                <div class="coffee-group">
+                    <div class="row align-items-center mb-3">
+                        <div class="col-md-3">
+                            <h6 class="mb-1">
+                                <i class="fas fa-circle-2 me-2"></i>Group 2
+                            </h6>
+                            <div id="group2Status" class="small text-muted">
+                                <span class="status-indicator status-disconnected"></span>
+                                Not Connected
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted">Purge Countdown:</small>
+                            <div id="group2Countdown" class="fw-bold">--</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-outline-warning btn-sm stop-btn" data-group="2">
+                                    <i class="fas fa-stop me-1"></i>Stop
+                                    <div class="spinner-border spinner-border-sm ms-1 loading" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </button>
+                                <button class="btn btn-outline-info btn-sm purge-btn" data-group="2">
+                                    <i class="fas fa-shower me-1"></i>Purge
+                                    <div class="spinner-border spinner-border-sm ms-1 loading" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="coffee-buttons">
+                        <button class="btn btn-coffee btn-sm coffee-btn" data-group="2" data-type="single_short">
+                            <i class="fas fa-coffee me-1"></i>
+                            <span class="btn-text">Single Short</span>
+                            <div class="spinner-border spinner-border-sm ms-1 loading" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </button>
+                        <button class="btn btn-coffee btn-sm coffee-btn" data-group="2" data-type="single_medium">
+                            <i class="fas fa-coffee me-1"></i>
+                            <span class="btn-text">Single Medium</span>
+                            <div class="spinner-border spinner-border-sm ms-1 loading" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </button>
+                        <button class="btn btn-coffee btn-sm coffee-btn" data-group="2" data-type="single_long">
+                            <i class="fas fa-coffee me-1"></i>
+                            <span class="btn-text">Single Long</span>
+                            <div class="spinner-border spinner-border-sm ms-1 loading" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </button>
+                        <button class="btn btn-coffee btn-sm coffee-btn" data-group="2" data-type="double_short">
+                            <i class="fas fa-coffee me-1"></i><i class="fas fa-coffee me-1"></i>
+                            <span class="btn-text">Double Short</span>
+                            <div class="spinner-border spinner-border-sm ms-1 loading" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </button>
+                        <button class="btn btn-coffee btn-sm coffee-btn" data-group="2" data-type="double_medium">
+                            <i class="fas fa-coffee me-1"></i><i class="fas fa-coffee me-1"></i>
+                            <span class="btn-text">Double Medium</span>
+                            <div class="spinner-border spinner-border-sm ms-1 loading" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </button>
+                        <button class="btn btn-coffee btn-sm coffee-btn" data-group="2" data-type="double_long">
+                            <i class="fas fa-coffee me-1"></i><i class="fas fa-coffee me-1"></i>
+                            <span class="btn-text">Double Long</span>
+                            <div class="spinner-border spinner-border-sm ms-1 loading" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Group 3 -->
+                <div class="coffee-group">
+                    <div class="row align-items-center mb-3">
+                        <div class="col-md-3">
+                            <h6 class="mb-1">
+                                <i class="fas fa-circle-3 me-2"></i>Group 3
+                            </h6>
+                            <div id="group3Status" class="small text-muted">
+                                <span class="status-indicator status-disconnected"></span>
+                                Not Connected
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted">Purge Countdown:</small>
+                            <div id="group3Countdown" class="fw-bold">--</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-outline-warning btn-sm stop-btn" data-group="3">
+                                    <i class="fas fa-stop me-1"></i>Stop
+                                    <div class="spinner-border spinner-border-sm ms-1 loading" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </button>
+                                <button class="btn btn-outline-info btn-sm purge-btn" data-group="3">
+                                    <i class="fas fa-shower me-1"></i>Purge
+                                    <div class="spinner-border spinner-border-sm ms-1 loading" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="coffee-buttons">
+                        <button class="btn btn-coffee btn-sm coffee-btn" data-group="3" data-type="single_short">
+                            <i class="fas fa-coffee me-1"></i>
+                            <span class="btn-text">Single Short</span>
+                            <div class="spinner-border spinner-border-sm ms-1 loading" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </button>
+                        <button class="btn btn-coffee btn-sm coffee-btn" data-group="3" data-type="single_medium">
+                            <i class="fas fa-coffee me-1"></i>
+                            <span class="btn-text">Single Medium</span>
+                            <div class="spinner-border spinner-border-sm ms-1 loading" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </button>
+                        <button class="btn btn-coffee btn-sm coffee-btn" data-group="3" data-type="single_long">
+                            <i class="fas fa-coffee me-1"></i>
+                            <span class="btn-text">Single Long</span>
+                            <div class="spinner-border spinner-border-sm ms-1 loading" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </button>
+                        <button class="btn btn-coffee btn-sm coffee-btn" data-group="3" data-type="double_short">
+                            <i class="fas fa-coffee me-1"></i><i class="fas fa-coffee me-1"></i>
+                            <span class="btn-text">Double Short</span>
+                            <div class="spinner-border spinner-border-sm ms-1 loading" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </button>
+                        <button class="btn btn-coffee btn-sm coffee-btn" data-group="3" data-type="double_medium">
+                            <i class="fas fa-coffee me-1"></i><i class="fas fa-coffee me-1"></i>
+                            <span class="btn-text">Double Medium</span>
+                            <div class="spinner-border spinner-border-sm ms-1 loading" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </button>
+                        <button class="btn btn-coffee btn-sm coffee-btn" data-group="3" data-type="double_long">
+                            <i class="fas fa-coffee me-1"></i><i class="fas fa-coffee me-1"></i>
+                            <span class="btn-text">Double Long</span>
+                            <div class="spinner-border spinner-border-sm ms-1 loading" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity and Logs -->
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>Recent Deliveries
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="deliveryHistory" class="table-responsive">
+                    <div class="text-center p-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <div class="mt-2">Loading delivery history...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-tools me-2"></i>Maintenance Logs
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="maintenanceLogs" class="table-responsive">
+                    <div class="text-center p-4">
+                        <div class="spinner-border text-info" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <div class="mt-2">Loading maintenance logs...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Extend the CoffeeMachineController class to load history and logs
+document.addEventListener('DOMContentLoaded', function() {
+    // Load delivery history
+    loadDeliveryHistory();
+    
+    // Load maintenance logs
+    loadMaintenanceLogs();
+    
+    // Refresh history every 30 seconds
+    setInterval(() => {
+        loadDeliveryHistory();
+        loadMaintenanceLogs();
+    }, 30000);
+});
+
+async function loadDeliveryHistory() {
+    try {
+        const response = await fetch('/api/history/?limit=10');
+        if (response.ok) {
+            const data = await response.json();
+            updateDeliveryHistory(data.deliveries);
+        }
+    } catch (error) {
+        console.error('Error loading delivery history:', error);
+    }
+}
+
+async function loadMaintenanceLogs() {
+    try {
+        const response = await fetch('/api/logs/?limit=10');
+        if (response.ok) {
+            const data = await response.json();
+            updateMaintenanceLogs(data.logs);
+        }
+    } catch (error) {
+        console.error('Error loading maintenance logs:', error);
+    }
+}
+
+function updateDeliveryHistory(deliveries) {
+    const container = document.getElementById('deliveryHistory');
+    
+    if (deliveries.length === 0) {
+        container.innerHTML = '<div class="text-center text-muted p-4">No recent deliveries</div>';
+        return;
+    }
+    
+    let html = '<table class="table table-sm"><thead><tr><th>Coffee Type</th><th>Group</th><th>Status</th><th>Time</th></tr></thead><tbody>';
+    
+    deliveries.forEach(delivery => {
+        const statusClass = delivery.status === 'Completed' ? 'success' : 
+                           delivery.status === 'Failed' ? 'danger' : 
+                           delivery.status === 'In Progress' ? 'warning' : 'secondary';
+        
+        const timeAgo = new Date(delivery.started_at).toLocaleString();
+        
+        html += `
+            <tr>
+                <td>${delivery.coffee_type}</td>
+                <td>Group ${delivery.group_number}</td>
+                <td><span class="badge bg-${statusClass}">${delivery.status}</span></td>
+                <td><small>${timeAgo}</small></td>
+            </tr>
+        `;
+    });
+    
+    html += '</tbody></table>';
+    container.innerHTML = html;
+}
+
+function updateMaintenanceLogs(logs) {
+    const container = document.getElementById('maintenanceLogs');
+    
+    if (logs.length === 0) {
+        container.innerHTML = '<div class="text-center text-muted p-4">No recent logs</div>';
+        return;
+    }
+    
+    let html = '<table class="table table-sm"><thead><tr><th>Type</th><th>Group</th><th>Message</th><th>Time</th></tr></thead><tbody>';
+    
+    logs.forEach(log => {
+        const timeAgo = new Date(log.timestamp).toLocaleString();
+        const groupInfo = log.group_number ? `Group ${log.group_number}` : '-';
+        
+        html += `
+            <tr>
+                <td><small>${log.log_type}</small></td>
+                <td><small>${groupInfo}</small></td>
+                <td><small>${log.message}</small></td>
+                <td><small>${timeAgo}</small></td>
+            </tr>
+        `;
+    });
+    
+    html += '</tbody></table>';
+    container.innerHTML = html;
+}
+</script>
+{% endblock %}
