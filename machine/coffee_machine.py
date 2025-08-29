@@ -1,4 +1,4 @@
-# machine/coffee_machine.py
+# machine/coffee_machine.py - CORRECTED VERSION
 import time
 import logging
 import threading
@@ -16,48 +16,84 @@ class CoffeeMachineException(Exception):
     pass
 
 class LaSpazialeCoffeeMachine:
-    """Enhanced LaSpaziale S50-QSS Robot controller with Django integration"""
+    """Enhanced LaSpaziale S50-QSS Robot controller with correct register addresses"""
     
-    # Command constants
+    # Command constants (from official documentation)
     COMMANDS = {
-        'SINGLE_SHORT': 1,
-        'SINGLE_LONG': 2,
-        'DOUBLE_SHORT': 4,
-        'DOUBLE_LONG': 8,
-        'NO_ACTION': 16,
-        'SINGLE_MEDIUM': 32,
-        'DOUBLE_MEDIUM': 64,
-        'STOP_DELIVERY': 128,
-        'START_PURGE': 256,
+        'SINGLE_SHORT': 0x0001,     # 1
+        'SINGLE_LONG': 0x0002,      # 2
+        'DOUBLE_SHORT': 0x0004,     # 4
+        'DOUBLE_LONG': 0x0008,      # 8
+        'NO_ACTION': 0x0010,        # 16
+        'SINGLE_MEDIUM': 0x0020,    # 32
+        'DOUBLE_MEDIUM': 0x0040,    # 64
+        'STOP_DELIVERY': 0x0080,    # 128
+        'START_PURGE': 0x0100,      # 256
     }
     
-    # Status bit masks
+    # Status bit masks (from official documentation)
     STATUS_MASKS = {
-        'single_short': 0x01,
-        'single_long': 0x02,
-        'double_short': 0x04,
-        'double_long': 0x08,
-        'continuous_flow': 0x10,
-        'single_medium': 0x20,
-        'double_medium': 0x40,
-        'purge': 0x80
+        'single_short': 0x0001,     # bit 0
+        'single_long': 0x0002,      # bit 1
+        'double_short': 0x0004,     # bit 2
+        'double_long': 0x0008,      # bit 3
+        'continuous_flow': 0x0010,  # bit 4
+        'single_medium': 0x0020,    # bit 5
+        'double_medium': 0x0040,    # bit 6
+        'purge': 0x0080             # bit 7
+    }
+    
+    # Register addresses (from official documentation)
+    REGISTERS = {
+        # Group 0: Identifying
+        'SERIAL_NUMBER': 0,         # 0-9 (20 chars, 10 registers)
+        'FIRMWARE_VERSION': 11,     # 11 (2 bytes: major.minor)
+        
+        # Group 1: Coffee Machine State
+        'GROUP_1_SELECTION': 256,   # 0x100
+        'GROUP_2_SELECTION': 257,   # 0x101
+        'GROUP_3_SELECTION': 258,   # 0x102
+        'GROUP_4_SELECTION': 259,   # 0x103
+        
+        'SENSOR_FAULT_GROUP_1': 260,  # 0x104
+        'SENSOR_FAULT_GROUP_2': 261,  # 0x105
+        'SENSOR_FAULT_GROUP_3': 262,  # 0x106
+        'SENSOR_FAULT_GROUP_4': 263,  # 0x107
+        
+        'PURGE_COUNTDOWN_GROUP_1': 264,  # 0x108
+        'PURGE_COUNTDOWN_GROUP_2': 265,  # 0x109
+        'PURGE_COUNTDOWN_GROUP_3': 266,  # 0x10A
+        'PURGE_COUNTDOWN_GROUP_4': 267,  # 0x10B
+        
+        'MACHINE_CONFIG': 268,      # 0x10C
+        'MACHINE_BLOCKED': 269,     # 0x10D
+        'NUMBER_OF_GROUPS': 270,    # 0x10E
+        
+        # Group 2: Commands
+        'COMMAND_GROUP_1': 512,     # 0x200
+        'COMMAND_GROUP_2': 513,     # 0x201
+        'COMMAND_GROUP_3': 514,     # 0x202
+        'COMMAND_GROUP_4': 515,     # 0x203
+        'WATER_COMMAND': 516,       # 0x204
+        'MAT_COMMAND': 517,         # 0x205
     }
     
     def __init__(self, port=None, baudrate=None):
         """Initialize connection to LaSpaziale S50-QSS Robot"""
-        self.port = port or getattr(settings, 'COFFEE_MACHINE_PORT', 'COM4')
+        self.port = port or getattr(settings, 'COFFEE_MACHINE_PORT', '/dev/ttyUSB1')
         self.baudrate = baudrate or getattr(settings, 'COFFEE_MACHINE_BAUDRATE', 9600)
         
+        # Official communication settings from documentation
         self.client = ModbusSerialClient(
             port=self.port,
             baudrate=self.baudrate,
             bytesize=8,
-            parity='N',
-            stopbits=1,
-            timeout=1
+            parity='N',        # None
+            stopbits=1,        # 1 stop bit
+            timeout=2          # Increased timeout for RS232
         )
         
-        self.node_address = 1
+        self.node_address = 0x01  # Official node address from documentation
         self.is_connected = False
         self._connection_lock = threading.Lock()
         
@@ -70,7 +106,6 @@ class LaSpazialeCoffeeMachine:
                 self.is_connected = self.client.connect()
                 if self.is_connected:
                     logger.info("Successfully connected to coffee machine")
-                    # Cache connection status
                     cache.set('coffee_machine_connected', True, timeout=300)
                 else:
                     logger.error("Failed to connect to coffee machine")
@@ -107,7 +142,11 @@ class LaSpazialeCoffeeMachine:
             raise CoffeeMachineException("Cannot establish connection to coffee machine")
         
         try:
-            result = self.client.read_holding_registers(address=address, count=count)
+            result = self.client.read_holding_registers(
+                address=address, 
+                count=count, 
+                slave=self.node_address
+            )
             if result.isError():
                 logger.error(f"Modbus error reading registers {address}-{address+count-1}: {result}")
                 return None
@@ -122,7 +161,11 @@ class LaSpazialeCoffeeMachine:
             raise CoffeeMachineException("Cannot establish connection to coffee machine")
         
         try:
-            result = self.client.write_register(address, value)
+            result = self.client.write_register(
+                address=address, 
+                value=value, 
+                slave=self.node_address
+            )
             success = not result.isError()
             if success:
                 logger.info(f"Successfully wrote value {value} to register {address}")
@@ -141,6 +184,7 @@ class LaSpazialeCoffeeMachine:
             'firmware_version': self.get_firmware_version(),
             'number_of_groups': self.get_number_of_groups(),
             'is_blocked': self.is_machine_blocked(),
+            'machine_config': self.get_machine_config(),
             'connection_status': self.is_connected,
             'port': self.port,
             'baudrate': self.baudrate,
@@ -152,38 +196,67 @@ class LaSpazialeCoffeeMachine:
         return info
     
     def get_serial_number(self) -> Optional[str]:
-        """Read board serial number (20 chars)"""
-        registers = self._read_registers(address=0, count=10)
+        """Read board serial number (20 chars from registers 0-9)"""
+        registers = self._read_registers(address=self.REGISTERS['SERIAL_NUMBER'], count=10)
         if registers is None:
             return None
         
         try:
-            serial = ''.join([chr(reg >> 8) + chr(reg & 0xFF) for reg in registers])
-            return serial.rstrip('\x00')
+            # Convert 10 registers (20 bytes) to string
+            serial_chars = []
+            for reg in registers:
+                # Each register contains 2 characters (high byte, low byte)
+                high_char = chr((reg >> 8) & 0xFF) if (reg >> 8) & 0xFF != 0 else ''
+                low_char = chr(reg & 0xFF) if reg & 0xFF != 0 else ''
+                serial_chars.extend([high_char, low_char])
+            
+            serial = ''.join(serial_chars).rstrip('\x00')
+            return serial if serial else None
         except Exception as e:
             logger.error(f"Error processing serial number: {e}")
             return None
     
     def get_firmware_version(self) -> Optional[str]:
-        """Read firmware version"""
-        registers = self._read_registers(address=11, count=1)
+        """Read firmware version (register 11)"""
+        registers = self._read_registers(address=self.REGISTERS['FIRMWARE_VERSION'], count=1)
         if registers is None:
             return None
         
         reg = registers[0]
-        major = (reg >> 8) & 0xFF
-        minor = reg & 0xFF
+        major = (reg >> 8) & 0xFF  # High byte = major version
+        minor = reg & 0xFF         # Low byte = minor version
         return f"{major}.{minor}"
     
     def get_number_of_groups(self) -> Optional[int]:
-        """Get total number of groups present"""
-        registers = self._read_registers(address=270, count=1)
+        """Get total number of groups present (register 270)"""
+        registers = self._read_registers(address=self.REGISTERS['NUMBER_OF_GROUPS'], count=1)
         return registers[0] if registers else None
     
     def is_machine_blocked(self) -> Optional[bool]:
-        """Check if coffee machine is blocked"""
-        registers = self._read_registers(address=269, count=1)
+        """Check if coffee machine is blocked (register 269)"""
+        registers = self._read_registers(address=self.REGISTERS['MACHINE_BLOCKED'], count=1)
         return registers[0] == 1 if registers else None
+    
+    def get_machine_config(self) -> Optional[Dict]:
+        """Get machine configuration (register 268)"""
+        registers = self._read_registers(address=self.REGISTERS['MACHINE_CONFIG'], count=1)
+        if registers is None:
+            return None
+        
+        config_value = registers[0]
+        doses_config = config_value & 0x03  # bits 0-1
+        
+        doses_map = {
+            0x00: 4,  # 4 doses available
+            0x01: 6,  # 6 doses available
+            0x02: 2,  # 2 doses available
+            0x03: 0   # Not used configuration
+        }
+        
+        return {
+            'doses_available': doses_map.get(doses_config, 0),
+            'raw_config': config_value
+        }
     
     # Enhanced status functions
     def get_all_groups_status(self) -> Dict:
@@ -191,7 +264,7 @@ class LaSpazialeCoffeeMachine:
         num_groups = self.get_number_of_groups() or 3
         groups_status = {}
         
-        for group in range(1, num_groups + 1):
+        for group in range(1, min(num_groups + 1, 5)):  # Max 4 groups supported
             groups_status[f'group_{group}'] = {
                 'selection': self.get_group_selection(group),
                 'sensor_fault': self.get_sensor_fault(group),
@@ -202,6 +275,7 @@ class LaSpazialeCoffeeMachine:
         status = {
             'groups': groups_status,
             'machine_blocked': self.is_machine_blocked(),
+            'machine_config': self.get_machine_config(),
             'last_updated': datetime.now().isoformat()
         }
         
@@ -210,11 +284,18 @@ class LaSpazialeCoffeeMachine:
         return status
     
     def get_group_selection(self, group_num: int) -> Optional[Dict]:
-        """Get current selection/delivery status for a group (1-3)"""
-        if not 1 <= group_num <= 3:
-            raise ValueError("Group number must be 1-3")
+        """Get current selection/delivery status for a group (1-4)"""
+        if not 1 <= group_num <= 4:
+            raise ValueError("Group number must be 1-4")
         
-        register_addr = 256 + (group_num - 1)
+        register_map = {
+            1: self.REGISTERS['GROUP_1_SELECTION'],
+            2: self.REGISTERS['GROUP_2_SELECTION'],
+            3: self.REGISTERS['GROUP_3_SELECTION'],
+            4: self.REGISTERS['GROUP_4_SELECTION']
+        }
+        
+        register_addr = register_map[group_num]
         registers = self._read_registers(register_addr, count=1)
         
         if registers is None:
@@ -234,52 +315,70 @@ class LaSpazialeCoffeeMachine:
         }
     
     def get_sensor_fault(self, group_num: int) -> Optional[bool]:
-        """Check if volumetric sensor has fault for group (1-3)"""
-        if not 1 <= group_num <= 3:
-            raise ValueError("Group number must be 1-3")
+        """Check if volumetric sensor has fault for group (1-4)"""
+        if not 1 <= group_num <= 4:
+            raise ValueError("Group number must be 1-4")
         
-        register_addr = 260 + (group_num - 1)
+        register_map = {
+            1: self.REGISTERS['SENSOR_FAULT_GROUP_1'],
+            2: self.REGISTERS['SENSOR_FAULT_GROUP_2'],
+            3: self.REGISTERS['SENSOR_FAULT_GROUP_3'],
+            4: self.REGISTERS['SENSOR_FAULT_GROUP_4']
+        }
+        
+        register_addr = register_map[group_num]
         registers = self._read_registers(register_addr, count=1)
         return registers[0] == 1 if registers else None
     
     def get_purge_countdown(self, group_num: int) -> Optional[int]:
-        """Get seconds until automatic purge for group (1-3)"""
-        if not 1 <= group_num <= 3:
-            raise ValueError("Group number must be 1-3")
+        """Get seconds until automatic purge for group (1-4)"""
+        if not 1 <= group_num <= 4:
+            raise ValueError("Group number must be 1-4")
         
-        register_addr = 264 + (group_num - 1)
+        register_map = {
+            1: self.REGISTERS['PURGE_COUNTDOWN_GROUP_1'],
+            2: self.REGISTERS['PURGE_COUNTDOWN_GROUP_2'],
+            3: self.REGISTERS['PURGE_COUNTDOWN_GROUP_3'],
+            4: self.REGISTERS['PURGE_COUNTDOWN_GROUP_4']
+        }
+        
+        register_addr = register_map[group_num]
         registers = self._read_registers(register_addr, count=1)
         return registers[0] if registers else None
     
     def is_group_busy(self, group_num: int) -> Optional[bool]:
         """Check if a group is busy (has an ongoing delivery)"""
-        if not 1 <= group_num <= 3:
-            raise ValueError("Group number must be 1-3")
-        
-        register_addr = 256 + (group_num - 1)
-        registers = self._read_registers(register_addr, count=1)
-        
-        if registers is None:
+        selection = self.get_group_selection(group_num)
+        if selection is None:
             return None
         
-        status = registers[0]
-        delivery_mask = 0xFF  # Bits 0-7 for coffee delivery
-        return (status & delivery_mask) != 0
+        # Check if any delivery is ongoing (bits 0-7)
+        return (selection['single_short'] or selection['single_long'] or 
+                selection['double_short'] or selection['double_long'] or
+                selection['continuous_flow'] or selection['single_medium'] or
+                selection['double_medium'] or selection['purge'])
     
     # Enhanced command functions
     def send_coffee_command(self, group_num: int, command: int) -> bool:
-        """Send coffee delivery command to group (1-3)"""
-        if not 1 <= group_num <= 3:
-            raise ValueError("Group number must be 1-3")
+        """Send coffee delivery command to group (1-4)"""
+        if not 1 <= group_num <= 4:
+            raise ValueError("Group number must be 1-4")
         
         if command not in self.COMMANDS.values():
             raise ValueError(f"Invalid command: {command}")
         
-        register_addr = 512 + (group_num - 1)
+        register_map = {
+            1: self.REGISTERS['COMMAND_GROUP_1'],
+            2: self.REGISTERS['COMMAND_GROUP_2'],
+            3: self.REGISTERS['COMMAND_GROUP_3'],
+            4: self.REGISTERS['COMMAND_GROUP_4']
+        }
+        
+        register_addr = register_map[group_num]
         result = self._write_register(register_addr, command)
         
         if result:
-            logger.info(f"Command {command} sent to group {group_num}")
+            logger.info(f"Command {command} (0x{command:04X}) sent to group {group_num}")
             # Clear cached status to force refresh
             cache.delete('machine_status')
         
@@ -304,6 +403,16 @@ class LaSpazialeCoffeeMachine:
             return {
                 'success': False,
                 'message': f'Group {group_num} is currently busy',
+                'group': group_num,
+                'coffee_type': coffee_type
+            }
+        
+        # Check purge countdown - don't deliver if near purge time
+        countdown = self.get_purge_countdown(group_num)
+        if countdown is not None and countdown < 10:  # Less than 10 seconds to purge
+            return {
+                'success': False,
+                'message': f'Group {group_num} is near automatic purge ({countdown}s). Please wait.',
                 'group': group_num,
                 'coffee_type': coffee_type
             }
@@ -352,12 +461,16 @@ class LaSpazialeCoffeeMachine:
     
     # Water and MAT commands
     def send_water_command(self, set_num: int) -> bool:
-        """Send water delivery command"""
-        return self._write_register(516, set_num)
+        """Send water delivery command (1=SET1, 2=SET2, 0=stop)"""
+        if set_num not in [0, 1, 2]:
+            raise ValueError("Water set number must be 0, 1, or 2")
+        return self._write_register(self.REGISTERS['WATER_COMMAND'], set_num)
     
     def send_mat_command(self, set_num: int) -> bool:
-        """Send MAT delivery command"""
-        return self._write_register(517, set_num)
+        """Send MAT delivery command (1=SET1, 2=SET2, 0=stop)"""
+        if set_num not in [0, 1, 2]:
+            raise ValueError("MAT set number must be 0, 1, or 2")
+        return self._write_register(self.REGISTERS['MAT_COMMAND'], set_num)
     
     # Health check and diagnostics
     def health_check(self) -> Dict:
@@ -374,10 +487,12 @@ class LaSpazialeCoffeeMachine:
             # Check machine block status
             blocked = self.is_machine_blocked()
             health['machine_blocked'] = blocked if blocked is not None else False
+            if blocked:
+                health['errors'].append('Machine is blocked - no deliveries possible')
             
             # Check all groups
             num_groups = self.get_number_of_groups() or 3
-            for group in range(1, num_groups + 1):
+            for group in range(1, min(num_groups + 1, 5)):
                 try:
                     group_status = {
                         'busy': self.is_group_busy(group),
@@ -388,6 +503,9 @@ class LaSpazialeCoffeeMachine:
                     
                     if group_status['sensor_fault']:
                         health['errors'].append(f'Sensor fault detected on group {group}')
+                    
+                    if group_status['purge_countdown'] is not None and group_status['purge_countdown'] < 30:
+                        health['errors'].append(f'Group {group} approaching automatic purge in {group_status["purge_countdown"]}s')
                         
                 except Exception as e:
                     health['errors'].append(f'Error checking group {group}: {str(e)}')
