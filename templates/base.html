@@ -234,7 +234,7 @@
                         this.showToast('Error', data.message, 'error');
                     }
                 } catch (error) {
-                    this.showToast('Error', 'Failed to connect to coffee machine', 'error');
+                    this.showToast('Error', data.message || 'Failed to connect to coffee machine', 'error');
                 } finally {
                     this.setButtonLoading(btn, false);
                 }
