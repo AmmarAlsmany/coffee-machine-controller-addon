@@ -87,7 +87,7 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Coffee Machine Settings
-COFFEE_MACHINE_PORT = os.getenv('COFFEE_MACHINE_PORT', '/dev/ttyUSB0')  # or 'COM4' for Windows
+COFFEE_MACHINE_PORT = os.getenv('COFFEE_MACHINE_PORT', '/dev/ttyUSB1')  # or 'COM4' for Windows
 COFFEE_MACHINE_BAUDRATE = int(os.getenv('COFFEE_MACHINE_BAUDRATE', '9600'))
 
 # Celery Configuration
