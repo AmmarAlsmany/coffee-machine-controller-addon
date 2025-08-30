@@ -166,7 +166,21 @@
             }
             
             getApiBaseUrl() {
-                // Always use relative URLs - they'll work both locally and through proxy
+                // Check if we're running through a proxy by looking at the current URL
+                const currentPath = window.location.pathname;
+                
+                // If the path contains /proxy/8000/, we're running through the proxy
+                if (currentPath.includes('/proxy/8000/')) {
+                    // Extract the base path up to and including /proxy/8000
+                    const match = currentPath.match(/(.*\/proxy\/8000)/);
+                    if (match) {
+                        const basePath = match[1];
+                        console.log('API Base URL (proxy):', basePath);
+                        return basePath;
+                    }
+                }
+                
+                // For local development or direct access
                 console.log('API Base URL: Using relative URLs (empty string)');
                 return '';
             }
