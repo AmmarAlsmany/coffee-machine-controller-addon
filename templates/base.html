@@ -160,7 +160,18 @@
             constructor() {
                 this.isConnected = false;
                 this.statusUpdateInterval = null;
+                // Detect if we're running locally or through a proxy
+                this.apiBaseUrl = this.getApiBaseUrl();
                 this.init();
+            }
+            
+            getApiBaseUrl() {
+                // If running on localhost, use direct URL
+                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                    return '';
+                }
+                // Otherwise, use the local server URL
+                return 'http://localhost:8000';
             }
             
             init() {
@@ -211,7 +222,7 @@
                 const baudrate = parseInt(document.getElementById('baudrateSelect')?.value || '9600');
                 
                 try {
-                    const response = await fetch('/api/connect/', {
+                    const response = await fetch(this.apiBaseUrl + '/api/connect/', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -234,7 +245,7 @@
                         this.showToast('Error', data.message, 'error');
                     }
                 } catch (error) {
-                    this.showToast('Error', data.message || 'Failed to connect to coffee machine', 'error');
+                    this.showToast('Error', 'Failed to connect to coffee machine', 'error');
                 } finally {
                     this.setButtonLoading(btn, false);
                 }
@@ -245,7 +256,7 @@
                 this.setButtonLoading(btn, true);
                 
                 try {
-                    const response = await fetch('/api/disconnect/', {
+                    const response = await fetch(this.apiBaseUrl + '/api/disconnect/', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -278,7 +289,7 @@
                 this.setButtonLoading(button, true);
                 
                 try {
-                    const response = await fetch('/api/deliver/', {
+                    const response = await fetch(this.apiBaseUrl + '/api/deliver/', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -309,7 +320,7 @@
                 this.setButtonLoading(button, true);
                 
                 try {
-                    const response = await fetch('/api/stop/', {
+                    const response = await fetch(this.apiBaseUrl + '/api/stop/', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -339,7 +350,7 @@
                 this.setButtonLoading(button, true);
                 
                 try {
-                    const response = await fetch('/api/purge/', {
+                    const response = await fetch(this.apiBaseUrl + '/api/purge/', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -370,7 +381,7 @@
                 this.setButtonLoading(btn, true);
                 
                 try {
-                    const response = await fetch('/api/health/');
+                    const response = await fetch(this.apiBaseUrl + '/api/health/');
                     const data = await response.json();
                     
                     if (data.overall_status === 'healthy') {
@@ -390,8 +401,8 @@
             async updateStatus() {
                 try {
                     const [infoResponse, statusResponse] = await Promise.all([
-                        fetch('/api/info/'),
-                        fetch('/api/status/')
+                        fetch(this.apiBaseUrl + '/api/info/'),
+                        fetch(this.apiBaseUrl + '/api/status/')
                     ]);
                     
                     if (infoResponse.ok) {

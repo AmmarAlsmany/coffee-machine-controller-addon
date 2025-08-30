@@ -392,9 +392,19 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 30000);
 });
 
+function getApiBaseUrl() {
+    // If running on localhost, use direct URL
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        return '';
+    }
+    // Otherwise, use the local server URL
+    return 'http://localhost:8000';
+}
+
 async function loadDeliveryHistory() {
     try {
-        const response = await fetch('/api/history/?limit=10');
+        const apiBaseUrl = getApiBaseUrl();
+        const response = await fetch(apiBaseUrl + '/api/history/?limit=10');
         if (response.ok) {
             const data = await response.json();
             updateDeliveryHistory(data.deliveries);
@@ -406,7 +416,8 @@ async function loadDeliveryHistory() {
 
 async function loadMaintenanceLogs() {
     try {
-        const response = await fetch('/api/logs/?limit=10');
+        const apiBaseUrl = getApiBaseUrl();
+        const response = await fetch(apiBaseUrl + '/api/logs/?limit=10');
         if (response.ok) {
             const data = await response.json();
             updateMaintenanceLogs(data.logs);

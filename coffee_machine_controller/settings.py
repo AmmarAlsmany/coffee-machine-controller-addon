@@ -75,8 +75,12 @@ REST_FRAMEWORK = {
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "http://xrqlxhrnom02wtf3cfz3odga9u80vpyc.ui.nabu.casa:3000",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+    "https://xrqlxhrnom02wtf3cfz3odga9u80vpyc.ui.nabu.casa",
 ]
+# Allow all origins for development (be careful in production)
+CORS_ALLOW_ALL_ORIGINS = True
 
 # Static files
 STATIC_URL = '/static/'
