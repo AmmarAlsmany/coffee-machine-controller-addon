@@ -106,38 +106,51 @@ def connect_machine(request):
         port = data.get('port') or settings.COFFEE_MACHINE_PORT
         baudrate = data.get('baudrate') or settings.COFFEE_MACHINE_BAUDRATE
         
+        logger.info(f"Attempting to connect to coffee machine on {port} at {baudrate} baud")
+        
         # Get machine instance with specified port/baudrate
         machine = get_coffee_machine(port=port, baudrate=baudrate, force_new=True)
         connected = machine.connect()
         
         if connected:
             # Update database record
-            machine_obj, created = CoffeeMachine.objects.get_or_create(
-                port=machine.port,
-                defaults={'baudrate': machine.baudrate}
-            )
-            
-            info = machine.get_machine_info()
-            machine_obj.serial_number = info.get('serial_number')
-            machine_obj.firmware_version = info.get('firmware_version')
-            machine_obj.number_of_groups = info.get('number_of_groups', 3)
-            machine_obj.is_connected = True
-            machine_obj.save()
-            
-            return Response({
-                'success': True,
-                'message': 'Successfully connected to coffee machine',
-                'machine_info': info
-            })
+            try:
+                machine_obj, created = CoffeeMachine.objects.get_or_create(
+                    port=machine.port,
+                    defaults={'baudrate': machine.baudrate}
+                )
+                
+                info = machine.get_machine_info()
+                if info:
+                    machine_obj.serial_number = info.get('serial_number')
+                    machine_obj.firmware_version = info.get('firmware_version')
+                    machine_obj.number_of_groups = info.get('number_of_groups', 3)
+                    machine_obj.is_connected = True
+                    machine_obj.save()
+                
+                return Response({
+                    'success': True,
+                    'message': 'Successfully connected to coffee machine',
+                    'machine_info': info
+                })
+            except Exception as db_error:
+                logger.error(f"Database error after connection: {db_error}")
+                # Connection succeeded but database update failed
+                return Response({
+                    'success': True,
+                    'message': 'Connected to coffee machine (database update failed)',
+                    'machine_info': {}
+                })
         else:
+            logger.warning(f"Failed to connect to coffee machine on {port}")
             return Response(
-                {'success': False, 'message': 'Failed to connect to coffee machine'}, 
+                {'success': False, 'message': f'Failed to connect to coffee machine on {port} at {baudrate} baud'}, 
                 status=status.HTTP_503_SERVICE_UNAVAILABLE
             )
     except Exception as e:
-        logger.error(f"Connection error: {e}")
+        logger.error(f"Connection error: {e}", exc_info=True)
         return Response(
-            {'error': str(e)}, 
+            {'success': False, 'error': str(e), 'message': f'Connection error: {str(e)}'}, 
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 

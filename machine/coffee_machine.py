@@ -83,15 +83,20 @@ class LaSpazialeCoffeeMachine:
         self.port = port or getattr(settings, 'COFFEE_MACHINE_PORT', '/dev/ttyUSB1')
         self.baudrate = baudrate or getattr(settings, 'COFFEE_MACHINE_BAUDRATE', 9600)
         
-        # Official communication settings from documentation
-        self.client = ModbusSerialClient(
-            port=self.port,
-            baudrate=self.baudrate,
-            bytesize=8,
-            parity='N',        # None
-            stopbits=1,        # 1 stop bit
-            timeout=2          # Increased timeout for RS232
-        )
+        try:
+            # Official communication settings from documentation
+            self.client = ModbusSerialClient(
+                port=self.port,
+                baudrate=self.baudrate,
+                bytesize=8,
+                parity='N',        # None
+                stopbits=1,        # 1 stop bit
+                timeout=2          # Increased timeout for RS232
+            )
+        except Exception as e:
+            logger.error(f"Failed to create Modbus client: {e}")
+            # Create a dummy client that will fail on connect
+            self.client = None
         
         self.node_address = 0x01  # Official node address from documentation
         self.is_connected = False
@@ -103,17 +108,23 @@ class LaSpazialeCoffeeMachine:
         """Establish connection to the coffee machine"""
         with self._connection_lock:
             try:
+                if self.client is None:
+                    logger.error("Modbus client not initialized - check port settings")
+                    self.is_connected = False
+                    cache.set('coffee_machine_connected', False, timeout=60)
+                    return False
+                    
                 self.is_connected = self.client.connect()
                 if self.is_connected:
                     logger.info("Successfully connected to coffee machine")
                     cache.set('coffee_machine_connected', True, timeout=300)
                 else:
-                    logger.error("Failed to connect to coffee machine")
+                    logger.error(f"Failed to connect to coffee machine on {self.port}")
                     cache.set('coffee_machine_connected', False, timeout=60)
                 
                 return self.is_connected
             except Exception as e:
-                logger.error(f"Connection error: {e}")
+                logger.error(f"Connection error on {self.port}: {e}")
                 self.is_connected = False
                 cache.set('coffee_machine_connected', False, timeout=60)
                 return False
