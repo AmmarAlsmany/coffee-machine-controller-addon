@@ -183,24 +183,50 @@ def deliver_coffee(request):
         group_number = data.get('group_number')
         coffee_type = data.get('coffee_type')
         
+        logger.info(f"Deliver coffee request: group={group_number}, type={coffee_type}")
+        
         if not group_number or not coffee_type:
+            logger.warning(f"Missing parameters: group_number={group_number}, coffee_type={coffee_type}")
             return Response(
-                {'error': 'group_number and coffee_type are required'}, 
+                {'success': False, 'message': 'group_number and coffee_type are required', 'error': 'Missing parameters'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        if not (1 <= int(group_number) <= 3):
+        try:
+            group_number = int(group_number)
+        except (ValueError, TypeError):
             return Response(
-                {'error': 'group_number must be between 1 and 3'}, 
+                {'success': False, 'message': f'Invalid group_number: {group_number}', 'error': 'Invalid group_number'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if not (1 <= group_number <= 3):
+            return Response(
+                {'success': False, 'message': f'group_number must be between 1 and 3, got {group_number}', 'error': 'Invalid group_number'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Validate coffee_type
+        valid_types = ['single_short', 'single_medium', 'single_long', 'double_short', 'double_medium', 'double_long']
+        if coffee_type not in valid_types:
+            return Response(
+                {'success': False, 'message': f'Invalid coffee_type: {coffee_type}. Must be one of {valid_types}', 'error': 'Invalid coffee_type'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
         
         # Create delivery record
-        delivery = CoffeeDelivery.objects.create(
-            coffee_type=coffee_type,
-            group_number=group_number,
-            status='pending'
-        )
+        try:
+            delivery = CoffeeDelivery.objects.create(
+                coffee_type=coffee_type,
+                group_number=group_number,
+                status='pending'
+            )
+        except Exception as db_error:
+            logger.error(f"Database error creating delivery: {db_error}")
+            return Response(
+                {'success': False, 'message': f'Database error: {str(db_error)}', 'error': 'Database error'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
         
         try:
             machine = get_coffee_machine()
