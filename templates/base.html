@@ -199,24 +199,42 @@
                 // Coffee delivery buttons
                 document.querySelectorAll('.coffee-btn').forEach(btn => {
                     btn.addEventListener('click', (e) => {
-                        const group = e.target.dataset.group;
-                        const type = e.target.dataset.type;
-                        this.deliverCoffee(group, type, e.target);
+                        // Use currentTarget instead of target to always get the button element
+                        const button = e.currentTarget;
+                        const group = button.dataset.group;
+                        const type = button.dataset.type;
+                        
+                        console.log('Coffee button clicked:', { group, type, button });
+                        
+                        if (!group || !type) {
+                            console.error('Missing data attributes:', { 
+                                group, 
+                                type, 
+                                dataset: button.dataset,
+                                element: button
+                            });
+                            this.showToast('Error', 'Button configuration error', 'error');
+                            return;
+                        }
+                        
+                        this.deliverCoffee(group, type, button);
                     });
                 });
                 
                 // Control buttons
                 document.querySelectorAll('.stop-btn').forEach(btn => {
                     btn.addEventListener('click', (e) => {
-                        const group = e.target.dataset.group;
-                        this.stopDelivery(group, e.target);
+                        const button = e.currentTarget;
+                        const group = button.dataset.group;
+                        this.stopDelivery(group, button);
                     });
                 });
                 
                 document.querySelectorAll('.purge-btn').forEach(btn => {
                     btn.addEventListener('click', (e) => {
-                        const group = e.target.dataset.group;
-                        this.startPurge(group, e.target);
+                        const button = e.currentTarget;
+                        const group = button.dataset.group;
+                        this.startPurge(group, button);
                     });
                 });
                 
@@ -294,12 +312,21 @@
             }
             
             async deliverCoffee(group, type, button) {
+                console.log('deliverCoffee called with:', { group, type });
+                
                 if (!this.isConnected) {
                     this.showToast('Error', 'Please connect to the coffee machine first', 'error');
                     return;
                 }
                 
                 this.setButtonLoading(button, true);
+                
+                const payload = {
+                    group_number: parseInt(group),
+                    coffee_type: type
+                };
+                
+                console.log('Sending payload:', payload);
                 
                 try {
                     const response = await fetch(this.apiBaseUrl + '/api/deliver/', {
@@ -308,10 +335,7 @@
                             'Content-Type': 'application/json',
                             'X-CSRFToken': this.getCSRFToken()
                         },
-                        body: JSON.stringify({
-                            group_number: parseInt(group),
-                            coffee_type: type
-                        })
+                        body: JSON.stringify(payload)
                     });
                     
                     const data = await response.json();
