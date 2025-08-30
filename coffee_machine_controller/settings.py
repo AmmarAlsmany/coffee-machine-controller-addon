@@ -5,7 +5,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'your-secret-key-here'
 DEBUG = True
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0', 'xrqlxhrnom02wtf3cfz3odga9u80vpyc.ui.nabu.casa']
+ALLOWED_HOSTS = ['*']  # Allow all hosts for development - be more restrictive in production
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -91,7 +91,7 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Coffee Machine Settings
-COFFEE_MACHINE_PORT = os.getenv('COFFEE_MACHINE_PORT', '/dev/ttyUSB1')  # or 'COM4' for Windows
+COFFEE_MACHINE_PORT = os.getenv('COFFEE_MACHINE_PORT', '/dev/ttyUSB1')  # Your coffee machine port on Raspberry Pi
 COFFEE_MACHINE_BAUDRATE = int(os.getenv('COFFEE_MACHINE_BAUDRATE', '9600'))
 
 # Celery Configuration

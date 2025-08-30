@@ -20,7 +20,7 @@ class Command(BaseCommand):
         
         try:
             if machine.connect():
-                self.stdout.write(self.style.SUCCESS('✓ Connection successful!'))
+                self.stdout.write(self.style.SUCCESS('Connection successful!'))
                 
                 # Get machine info
                 info = machine.get_machine_info()
@@ -39,10 +39,10 @@ class Command(BaseCommand):
                                     (f" (Sensor Fault)" if fault else ""))
                 
             else:
-                self.stdout.write(self.style.ERROR('✗ Connection failed!'))
+                self.stdout.write(self.style.ERROR('Connection failed!'))
                 
         except Exception as e:
-            self.stdout.write(self.style.ERROR(f'✗ Error: {e}'))
+            self.stdout.write(self.style.ERROR(f'Error: {e}'))
         
         finally:
             machine.disconnect()

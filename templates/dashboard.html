@@ -393,12 +393,8 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function getApiBaseUrl() {
-    // If running on localhost, use direct URL
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        return '';
-    }
-    // Otherwise, use the local server URL
-    return 'http://localhost:8000';
+    // Always use relative URLs - they'll work both locally and through proxy
+    return '';
 }
 
 async function loadDeliveryHistory() {
