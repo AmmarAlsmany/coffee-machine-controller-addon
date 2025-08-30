@@ -176,10 +176,15 @@ def disconnect_machine(request):
         )
 
 @api_view(['POST'])
+@csrf_exempt
 def deliver_coffee(request):
     """Deliver coffee"""
     try:
         data = request.data
+        logger.info(f"Received request data: {data}")
+        logger.info(f"Request method: {request.method}")
+        logger.info(f"Request content type: {request.content_type}")
+        
         group_number = data.get('group_number')
         coffee_type = data.get('coffee_type')
         

@@ -339,14 +339,17 @@
                     });
                     
                     const data = await response.json();
+                    console.log('Response status:', response.status);
+                    console.log('Response data:', data);
                     
                     if (data.success) {
                         this.showToast('Success', data.message, 'success');
                         this.updateStatus();
                     } else {
-                        this.showToast('Error', data.message, 'error');
+                        this.showToast('Error', data.message || data.error || 'Failed to deliver coffee', 'error');
                     }
                 } catch (error) {
+                    console.error('Error in deliverCoffee:', error);
                     this.showToast('Error', 'Failed to deliver coffee', 'error');
                 } finally {
                     this.setButtonLoading(button, false);
