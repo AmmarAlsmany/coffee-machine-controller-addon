@@ -138,8 +138,13 @@ class LaSpazialeCoffeeMachine:
     
     def _read_registers(self, address: int, count: int = 1) -> Optional[List[int]]:
         """Safely read registers with error handling"""
+        if not self.is_connected:
+            logger.warning(f"Attempted to read registers while disconnected")
+            return None
+            
         if not self.ensure_connection():
-            raise CoffeeMachineException("Cannot establish connection to coffee machine")
+            logger.error("Cannot establish connection to coffee machine")
+            return None
         
         try:
             result = self.client.read_holding_registers(
@@ -157,8 +162,13 @@ class LaSpazialeCoffeeMachine:
     
     def _write_register(self, address: int, value: int) -> bool:
         """Safely write register with error handling"""
+        if not self.is_connected:
+            logger.warning(f"Attempted to write register while disconnected")
+            return False
+            
         if not self.ensure_connection():
-            raise CoffeeMachineException("Cannot establish connection to coffee machine")
+            logger.error("Cannot establish connection to coffee machine")
+            return False
         
         try:
             result = self.client.write_register(

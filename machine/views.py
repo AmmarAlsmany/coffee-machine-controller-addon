@@ -32,28 +32,70 @@ def machine_info(request):
     """Get machine information"""
     try:
         machine = get_coffee_machine()
+        
+        # Return basic info if not connected
+        if not machine.is_connected:
+            return Response({
+                'serial_number': 'Not Connected',
+                'firmware_version': 'Not Connected',
+                'number_of_groups': 'Not Connected',
+                'is_blocked': 'Unknown',
+                'machine_config': None,
+                'connection_status': False,
+                'port': machine.port,
+                'baudrate': machine.baudrate,
+                'last_updated': None
+            })
+        
         info = machine.get_machine_info()
         return Response(info)
     except Exception as e:
         logger.error(f"Error getting machine info: {e}")
-        return Response(
-            {'error': 'Failed to get machine information'}, 
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
+        return Response({
+            'serial_number': 'Error',
+            'firmware_version': 'Error',
+            'number_of_groups': 'Error',
+            'is_blocked': 'Unknown',
+            'machine_config': None,
+            'connection_status': False,
+            'port': getattr(settings, 'COFFEE_MACHINE_PORT', '/dev/ttyUSB1'),
+            'baudrate': getattr(settings, 'COFFEE_MACHINE_BAUDRATE', 9600),
+            'last_updated': None,
+            'error': str(e)
+        })
 
 @api_view(['GET'])
 def machine_status(request):
     """Get current machine status"""
     try:
         machine = get_coffee_machine()
+        
+        # Return empty status if not connected
+        if not machine.is_connected:
+            return Response({
+                'groups': {
+                    'group_1': {'is_busy': False, 'sensor_fault': False, 'purge_countdown': 0, 'current_action': 'Not Connected'},
+                    'group_2': {'is_busy': False, 'sensor_fault': False, 'purge_countdown': 0, 'current_action': 'Not Connected'},
+                    'group_3': {'is_busy': False, 'sensor_fault': False, 'purge_countdown': 0, 'current_action': 'Not Connected'}
+                },
+                'machine_blocked': False,
+                'connection_status': False
+            })
+        
         machine_status = machine.get_all_groups_status()
         return Response(machine_status)
     except Exception as e:
         logger.error(f"Error getting machine status: {e}")
-        return Response(
-            {'error': 'Failed to get machine status'}, 
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
+        return Response({
+            'groups': {
+                'group_1': {'is_busy': False, 'sensor_fault': False, 'purge_countdown': 0, 'current_action': 'Error'},
+                'group_2': {'is_busy': False, 'sensor_fault': False, 'purge_countdown': 0, 'current_action': 'Error'},
+                'group_3': {'is_busy': False, 'sensor_fault': False, 'purge_countdown': 0, 'current_action': 'Error'}
+            },
+            'machine_blocked': False,
+            'connection_status': False,
+            'error': str(e)
+        })
 
 @api_view(['POST'])
 def connect_machine(request):

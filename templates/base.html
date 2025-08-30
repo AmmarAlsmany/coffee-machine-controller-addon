@@ -154,7 +154,7 @@
     <!-- Bootstrap JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     
-    <!-- Custom JavaScript -->
+    <!-- Custom JavaScript with cache busting -->
     <script>
         class CoffeeMachineController {
             constructor() {
@@ -167,6 +167,7 @@
             
             getApiBaseUrl() {
                 // Always use relative URLs - they'll work both locally and through proxy
+                console.log('API Base URL: Using relative URLs (empty string)');
                 return '';
             }
             
@@ -218,7 +219,9 @@
                 const baudrate = parseInt(document.getElementById('baudrateSelect')?.value || '9600');
                 
                 try {
-                    const response = await fetch(this.apiBaseUrl + '/api/connect/', {
+                    const url = this.apiBaseUrl + '/api/connect/';
+                    console.log('Connecting to:', url);
+                    const response = await fetch(url, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
