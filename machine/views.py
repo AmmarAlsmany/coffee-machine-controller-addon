@@ -8,6 +8,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.core.cache import cache
 from django.utils import timezone
+from django.conf import settings
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
@@ -58,7 +59,13 @@ def machine_status(request):
 def connect_machine(request):
     """Connect to coffee machine"""
     try:
-        machine = get_coffee_machine()
+        # Get port and baudrate from request or use defaults
+        data = request.data or {}
+        port = data.get('port') or settings.COFFEE_MACHINE_PORT
+        baudrate = data.get('baudrate') or settings.COFFEE_MACHINE_BAUDRATE
+        
+        # Get machine instance with specified port/baudrate
+        machine = get_coffee_machine(port=port, baudrate=baudrate, force_new=True)
         connected = machine.connect()
         
         if connected:

@@ -524,13 +524,26 @@ class LaSpazialeCoffeeMachine:
 _coffee_machine_instance = None
 _instance_lock = threading.Lock()
 
-def get_coffee_machine() -> LaSpazialeCoffeeMachine:
-    """Get singleton coffee machine instance"""
+def get_coffee_machine(port=None, baudrate=None, force_new=False) -> LaSpazialeCoffeeMachine:
+    """Get singleton coffee machine instance
+    
+    Args:
+        port: Override port for the connection
+        baudrate: Override baudrate for the connection  
+        force_new: Force creation of a new instance with new parameters
+    """
     global _coffee_machine_instance
+    
+    # If forcing new instance or parameters changed, recreate
+    if force_new or (port and _coffee_machine_instance and _coffee_machine_instance.port != port):
+        with _instance_lock:
+            if _coffee_machine_instance:
+                _coffee_machine_instance.disconnect()
+            _coffee_machine_instance = LaSpazialeCoffeeMachine(port=port, baudrate=baudrate)
     
     if _coffee_machine_instance is None:
         with _instance_lock:
             if _coffee_machine_instance is None:
-                _coffee_machine_instance = LaSpazialeCoffeeMachine()
+                _coffee_machine_instance = LaSpazialeCoffeeMachine(port=port, baudrate=baudrate)
                 
     return _coffee_machine_instance

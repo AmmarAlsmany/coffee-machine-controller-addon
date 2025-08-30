@@ -24,4 +24,18 @@ Coffee machine controller initialized
 Coffee machine initialized on port /dev/ttyUSB0 at 9600 bps
 Coffee machine controller initialized
 Coffee machine initialized on port /dev/ttyUSB0 at 9600 bps
+Coffee machine controller initializedFailed to initialize coffee machine controller: No module named 'pymodbus'
+Failed to initialize coffee machine controller: Serial client requires pyserial Please install with "pip install pyserial" and try again.
+Coffee machine initialized on port /dev/ttyUSB1 at 9600 bps
 Coffee machine controller initialized
+Failed to connect to coffee machine
+Disconnected from coffee machine
+Coffee machine initialized on port /dev/ttyUSB1 at 9600 bps
+Coffee machine controller initialized
+Coffee machine initialized on port /dev/ttyUSB1 at 9600 bps
+Coffee machine controller initialized
+Coffee machine initialized on port /dev/ttyUSB1 at 9600 bps
+Coffee machine controller initialized
+Coffee machine initialized on port C:/Program Files/Git/dev/ttyUSB1 at 9600 bps
+Failed to connect to coffee machine
+Disconnected from coffee machine

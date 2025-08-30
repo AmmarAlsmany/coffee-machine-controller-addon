@@ -206,13 +206,21 @@
                 const btn = document.getElementById('connectBtn');
                 this.setButtonLoading(btn, true);
                 
+                // Get port and baudrate from form
+                const port = document.getElementById('portSelect')?.value || '/dev/ttyUSB1';
+                const baudrate = parseInt(document.getElementById('baudrateSelect')?.value || '9600');
+                
                 try {
                     const response = await fetch('/api/connect/', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                             'X-CSRFToken': this.getCSRFToken()
-                        }
+                        },
+                        body: JSON.stringify({
+                            port: port,
+                            baudrate: baudrate
+                        })
                     });
                     
                     const data = await response.json();

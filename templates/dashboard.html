@@ -14,24 +14,40 @@
                 </h5>
             </div>
             <div class="card-body">
+                <div class="mb-3">
+                    <label for="portSelect" class="form-label"><strong>Port:</strong></label>
+                    <input type="text" class="form-control" id="portSelect" placeholder="/dev/ttyUSB1" value="/dev/ttyUSB1">
+                    <small class="text-muted">e.g., /dev/ttyUSB0, /dev/ttyUSB1, COM3, COM4</small>
+                </div>
+                <div class="mb-3">
+                    <label for="baudrateSelect" class="form-label"><strong>Baudrate:</strong></label>
+                    <select class="form-select" id="baudrateSelect">
+                        <option value="9600" selected>9600</option>
+                        <option value="19200">19200</option>
+                        <option value="38400">38400</option>
+                        <option value="57600">57600</option>
+                        <option value="115200">115200</option>
+                    </select>
+                </div>
+                <hr>
                 <table class="table table-borderless">
                     <tbody>
                         <tr>
                             <td><strong>Serial Number:</strong></td>
-                            <td id="serialNumber">Loading...</td>
+                            <td id="serialNumber">Not Connected</td>
                         </tr>
                         <tr>
                             <td><strong>Firmware Version:</strong></td>
-                            <td id="firmwareVersion">Loading...</td>
+                            <td id="firmwareVersion">Not Connected</td>
                         </tr>
                         <tr>
                             <td><strong>Number of Groups:</strong></td>
-                            <td id="numberOfGroups">Loading...</td>
+                            <td id="numberOfGroups">Not Connected</td>
                         </tr>
                         <tr>
                             <td><strong>Machine Blocked:</strong></td>
                             <td>
-                                <span id="machineBlocked" class="badge bg-secondary">Loading...</span>
+                                <span id="machineBlocked" class="badge bg-secondary">Unknown</span>
                             </td>
                         </tr>
                     </tbody>
