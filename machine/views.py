@@ -180,6 +180,8 @@ def disconnect_machine(request):
 def deliver_coffee(request):
     """Deliver coffee"""
     try:
+        import json
+        
         logger.info(f"=== DELIVER COFFEE REQUEST ===")
         logger.info(f"Method: {request.method}")
         logger.info(f"Content-Type: {request.content_type}")
@@ -188,16 +190,44 @@ def deliver_coffee(request):
         logger.info(f"request.data: {request.data}")
         logger.info(f"request.data type: {type(request.data)}")
         
-        # Since we're using @api_view, request.data is always available
+        # Try multiple methods to get the data (for proxy compatibility)
+        data = None
+        
+        # Method 1: Use request.data (DRF standard)
+        if request.data:
+            data = request.data
+            logger.info(f"Using request.data: {data}")
+        # Method 2: Parse request.body if request.data is empty
+        elif request.body:
+            try:
+                body_str = request.body.decode('utf-8')
+                data = json.loads(body_str)
+                logger.info(f"Parsed from request.body: {data}")
+            except (json.JSONDecodeError, UnicodeDecodeError) as e:
+                logger.error(f"Failed to parse request.body: {e}")
+                # Try URL-encoded format
+                try:
+                    from urllib.parse import parse_qs
+                    parsed = parse_qs(body_str)
+                    data = {k: v[0] if isinstance(v, list) and v else v for k, v in parsed.items()}
+                    logger.info(f"Parsed as URL-encoded: {data}")
+                except Exception as e2:
+                    logger.error(f"Failed to parse as URL-encoded: {e2}")
+        
+        # If still no data, return error
+        if not data:
+            data = {}
+            logger.error("No data could be parsed from request")
+        
         # Get values from data - handle both string and int types
-        group_number = request.data.get('group_number')
-        coffee_type = request.data.get('coffee_type')
+        group_number = data.get('group_number')
+        coffee_type = data.get('coffee_type')
         
         logger.info(f"Deliver coffee request: group={group_number} (type: {type(group_number)}), coffee_type={coffee_type}")
         
         if group_number is None or coffee_type is None:
             logger.warning(f"Missing parameters: group_number={group_number}, coffee_type={coffee_type}")
-            logger.warning(f"Available keys in request.data: {list(request.data.keys())}")
+            logger.warning(f"Available keys in data: {list(data.keys()) if data else []}")
             return Response(
                 {'success': False, 'message': 'group_number and coffee_type are required', 'error': 'Missing parameters'}, 
                 status=status.HTTP_400_BAD_REQUEST

@@ -335,14 +335,25 @@
                 console.log('Request Body:', requestBody);
                 console.log('Request Data:', requestData);
                 
+                // Build headers
+                const headers = {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                };
+                
+                // Only add CSRF token if available
+                if (csrfToken) {
+                    headers['X-CSRFToken'] = csrfToken;
+                }
+                
+                console.log('Request Headers:', headers);
+                
                 try {
                     const response = await fetch(this.apiBaseUrl + '/api/deliver/', {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': csrfToken
-                        },
-                        body: requestBody
+                        headers: headers,
+                        body: requestBody,
+                        credentials: 'include'  // Include cookies for session
                     });
                     
                     const data = await response.json();

@@ -84,6 +84,18 @@ CORS_ALLOWED_ORIGINS = [
 # Allow all origins for development (be careful in production)
 CORS_ALLOW_ALL_ORIGINS = True
 
+# CSRF settings for proxy/ingress
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.ui.nabu.casa',
+    'https://xrqlxhrnom02wtf3cfz3odga9u80vpyc.ui.nabu.casa',
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+]
+
+# Additional proxy settings
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 # Static files
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
