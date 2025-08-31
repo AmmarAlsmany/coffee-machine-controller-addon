@@ -183,18 +183,6 @@ def deliver_coffee(request):
         import json
         
         logger.info(f"=== DELIVER COFFEE REQUEST (Pure Django) ===")
-        logger.info(f"Method: {request.method}")
-        logger.info(f"Path: {request.path}")
-        logger.info(f"Full Path: {request.get_full_path()}")
-        logger.info(f"Content-Type: {request.content_type}")
-        logger.info(f"Content-Length: {request.headers.get('Content-Length', 'Not set')}")
-        logger.info(f"Headers: {dict(request.headers)}")
-        logger.info(f"request.body exists: {bool(request.body)}")
-        logger.info(f"request.body length: {len(request.body) if request.body else 0}")
-        logger.info(f"request.body raw bytes: {request.body}")
-        logger.info(f"request.body decoded: {request.body.decode('utf-8') if request.body else 'Empty'}")
-        logger.info(f"request.POST: {request.POST}")
-        
         # Try multiple methods to get the data (for proxy compatibility)
         data = None
         body_content = None

@@ -373,16 +373,21 @@
             async stopDelivery(group, button) {
                 this.setButtonLoading(button, true);
                 
+                // Add URL parameters for proxy compatibility
+                const params = new URLSearchParams({ group: group });
+                const url = this.apiBaseUrl + '/api/stop/?' + params.toString();
+                
                 try {
-                    const response = await fetch(this.apiBaseUrl + '/api/stop/', {
+                    const response = await fetch(url, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRFToken': this.getCSRFToken()
+                            'Accept': 'application/json'
                         },
                         body: JSON.stringify({
                             group_number: parseInt(group)
-                        })
+                        }),
+                        credentials: 'include'
                     });
                     
                     const data = await response.json();
@@ -403,16 +408,21 @@
             async startPurge(group, button) {
                 this.setButtonLoading(button, true);
                 
+                // Add URL parameters for proxy compatibility
+                const params = new URLSearchParams({ group: group });
+                const url = this.apiBaseUrl + '/api/purge/?' + params.toString();
+                
                 try {
-                    const response = await fetch(this.apiBaseUrl + '/api/purge/', {
+                    const response = await fetch(url, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRFToken': this.getCSRFToken()
+                            'Accept': 'application/json'
                         },
                         body: JSON.stringify({
                             group_number: parseInt(group)
-                        })
+                        }),
+                        credentials: 'include'
                     });
                     
                     const data = await response.json();

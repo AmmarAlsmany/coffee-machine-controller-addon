@@ -3,7 +3,8 @@ import json
 import logging
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from .models import CoffeeDelivery
+from django.utils import timezone
+from .models import CoffeeDelivery, MaintenanceLog
 from .coffee_machine import get_coffee_machine
 
 logger = logging.getLogger('machine')
@@ -91,6 +92,159 @@ def deliver_coffee_raw(request):
                 'message': result.get('message', 'Coffee delivered'),
                 'group': group_number,
                 'type': coffee_type
+            })
+        except Exception as e:
+            logger.error(f"Machine error: {e}")
+            return JsonResponse({
+                'success': False,
+                'message': f'Machine error: {str(e)}'
+            }, status=500)
+            
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@csrf_exempt
+def stop_delivery_raw(request):
+    """Stop delivery endpoint that works with proxy"""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    try:
+        logger.info("=== STOP DELIVERY RAW ===")
+        
+        # Try to get data from anywhere
+        data = None
+        
+        # Try 1: Read raw input
+        try:
+            raw_data = request.read()
+            if raw_data:
+                data = json.loads(raw_data)
+        except:
+            pass
+        
+        # Try 2: Get from URL params
+        if not data:
+            group_number = request.GET.get('group')
+            if group_number:
+                data = {'group_number': group_number}
+        
+        # Try 3: Use default
+        if not data:
+            data = {'group_number': 1}
+        
+        group_number = data.get('group_number')
+        
+        # Convert to int
+        try:
+            group_number = int(group_number)
+        except (ValueError, TypeError):
+            return JsonResponse({
+                'success': False,
+                'message': f'Invalid group_number: {group_number}'
+            }, status=400)
+        
+        # Stop delivery
+        try:
+            machine = get_coffee_machine()
+            success = machine.stop_delivery(group_number)
+            
+            if success:
+                # Update database
+                CoffeeDelivery.objects.filter(
+                    group_number=group_number,
+                    status='in_progress'
+                ).update(
+                    status='stopped',
+                    completed_at=timezone.now()
+                )
+                
+                MaintenanceLog.objects.create(
+                    log_type='manual_stop',
+                    group_number=group_number,
+                    message=f'Manual stop command sent to group {group_number}'
+                )
+            
+            return JsonResponse({
+                'success': success,
+                'message': f'Stop command {"sent" if success else "failed"} for group {group_number}'
+            })
+        except Exception as e:
+            logger.error(f"Machine error: {e}")
+            return JsonResponse({
+                'success': False,
+                'message': f'Machine error: {str(e)}'
+            }, status=500)
+            
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@csrf_exempt
+def start_purge_raw(request):
+    """Start purge endpoint that works with proxy"""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    try:
+        logger.info("=== START PURGE RAW ===")
+        
+        # Try to get data from anywhere
+        data = None
+        
+        # Try 1: Read raw input
+        try:
+            raw_data = request.read()
+            if raw_data:
+                data = json.loads(raw_data)
+        except:
+            pass
+        
+        # Try 2: Get from URL params
+        if not data:
+            group_number = request.GET.get('group')
+            if group_number:
+                data = {'group_number': group_number}
+        
+        # Try 3: Use default
+        if not data:
+            data = {'group_number': 1}
+        
+        group_number = data.get('group_number')
+        
+        # Convert to int
+        try:
+            group_number = int(group_number)
+        except (ValueError, TypeError):
+            return JsonResponse({
+                'success': False,
+                'message': f'Invalid group_number: {group_number}'
+            }, status=400)
+        
+        # Start purge
+        try:
+            machine = get_coffee_machine()
+            success = machine.start_purge(group_number)
+            
+            if success:
+                MaintenanceLog.objects.create(
+                    log_type='purge',
+                    group_number=group_number,
+                    message=f'Purge cycle started for group {group_number}'
+                )
+            
+            return JsonResponse({
+                'success': success,
+                'message': f'Purge cycle {"started" if success else "failed"} for group {group_number}'
             })
         except Exception as e:
             logger.error(f"Machine error: {e}")
