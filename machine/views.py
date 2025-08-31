@@ -219,8 +219,8 @@ def deliver_coffee(request):
         logger.info(f"Data type: {type(data)}")
         
         # Get values from data - handle both string and int types
-        group_number = 1
-        coffee_type = 'single_short'
+        group_number = data.get('group_number')
+        coffee_type = data.get('coffee_type')
         
         logger.info(f"Deliver coffee request: group={group_number} (type: {type(group_number)}), coffee_type={coffee_type}")
         

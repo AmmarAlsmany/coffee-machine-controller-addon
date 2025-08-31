@@ -196,42 +196,24 @@
                 document.getElementById('connectBtn')?.addEventListener('click', () => this.connect());
                 document.getElementById('disconnectBtn')?.addEventListener('click', () => this.disconnect());
                 
-                // Coffee delivery buttons with fixed mappings
+                // Coffee delivery buttons using data attributes
                 document.querySelectorAll('.coffee-btn').forEach(btn => {
                     btn.addEventListener('click', (e) => {
                         const button = e.currentTarget;
                         
-                        // Get button text to determine type
-                        const btnText = button.querySelector('.btn-text')?.textContent?.trim() || '';
+                        // Get group and type from data attributes
+                        const group = button.dataset.group;
+                        const type = button.dataset.type;
                         
-                        // Determine group from parent structure
-                        const groupSection = button.closest('.coffee-group');
-                        let group = '1'; // default
+                        console.log('Coffee button clicked:', { 
+                            buttonId: button.id,
+                            group: group, 
+                            type: type 
+                        });
                         
-                        if (groupSection) {
-                            const groupTitle = groupSection.querySelector('h6')?.textContent || '';
-                            if (groupTitle.includes('Group 1')) group = '1';
-                            else if (groupTitle.includes('Group 2')) group = '2';
-                            else if (groupTitle.includes('Group 3')) group = '3';
-                        }
-                        
-                        // Fixed mapping for coffee types based on button text
-                        const coffeeTypeMap = {
-                            'Single Short': 'single_short',
-                            'Single Medium': 'single_medium',
-                            'Single Long': 'single_long',
-                            'Double Short': 'double_short',
-                            'Double Medium': 'double_medium',
-                            'Double Long': 'double_long'
-                        };
-                        
-                        const type = coffeeTypeMap[btnText];
-                        
-                        console.log('Coffee button clicked:', { btnText, group, type });
-                        
-                        if (!type) {
-                            console.error('Unknown coffee type for button:', btnText);
-                            this.showToast('Error', 'Unknown coffee type', 'error');
+                        if (!group || !type) {
+                            console.error('Missing data attributes on button:', button);
+                            this.showToast('Error', 'Button configuration error', 'error');
                             return;
                         }
                         
@@ -339,13 +321,13 @@
                 
                 this.setButtonLoading(button, true);
                 
-                // Create fixed request data
+                // Create request data with proper type conversion
                 const requestData = {
-                    group_number: group,
+                    group_number: parseInt(group),  // Ensure it's a number
                     coffee_type: type
                 };
                 
-                console.log('Sending fixed JSON data:', requestData);
+                console.log('Sending JSON data:', requestData);
                 
                 try {
                     const response = await fetch(this.apiBaseUrl + '/api/deliver/', {
