@@ -327,33 +327,29 @@
                     coffee_type: type
                 };
                 
-                const csrfToken = this.getCSRFToken();
+                // Try sending as URL parameters as a workaround for proxy issues
+                const params = new URLSearchParams({
+                    group: group,
+                    type: type
+                });
+                
+                const url = this.apiBaseUrl + '/api/deliver/?' + params.toString();
                 const requestBody = JSON.stringify(requestData);
                 
-                console.log('Request URL:', this.apiBaseUrl + '/api/deliver/');
-                console.log('CSRF Token:', csrfToken ? 'Found' : 'Not found');
+                console.log('Request URL with params:', url);
                 console.log('Request Body:', requestBody);
                 console.log('Request Data:', requestData);
                 
-                // Build headers
-                const headers = {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                };
-                
-                // Only add CSRF token if available
-                if (csrfToken) {
-                    headers['X-CSRFToken'] = csrfToken;
-                }
-                
-                console.log('Request Headers:', headers);
-                
                 try {
-                    const response = await fetch(this.apiBaseUrl + '/api/deliver/', {
+                    // Send with URL parameters (for proxy compatibility)
+                    const response = await fetch(url, {
                         method: 'POST',
-                        headers: headers,
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
                         body: requestBody,
-                        credentials: 'include'  // Include cookies for session
+                        credentials: 'include'
                     });
                     
                     const data = await response.json();

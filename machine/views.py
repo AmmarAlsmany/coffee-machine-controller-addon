@@ -197,16 +197,60 @@ def deliver_coffee(request):
         
         # Try multiple methods to get the data (for proxy compatibility)
         data = None
+        body_content = None
         
-        # Method 1: Always try to parse request.body first if it exists
-        if request.body:
+        # Method 1: Try to read from WSGI input stream for chunked encoding
+        if 'chunked' in request.META.get('HTTP_TRANSFER_ENCODING', '').lower():
+            logger.info("Detected chunked encoding, trying to read from WSGI input")
             try:
-                body_str = request.body.decode('utf-8')
+                # Try to read from the WSGI input stream
+                wsgi_input = request.META.get('wsgi.input')
+                if wsgi_input:
+                    # Save current position
+                    current_pos = wsgi_input.tell() if hasattr(wsgi_input, 'tell') else None
+                    # Try to read
+                    if hasattr(wsgi_input, 'seek'):
+                        wsgi_input.seek(0)
+                    body_content = wsgi_input.read()
+                    logger.info(f"Read from WSGI input: {body_content}")
+                    # Restore position if possible
+                    if current_pos is not None and hasattr(wsgi_input, 'seek'):
+                        wsgi_input.seek(current_pos)
+            except Exception as e:
+                logger.error(f"Failed to read from WSGI input: {e}")
+        
+        # Method 2: Try request._stream if available
+        if not body_content and hasattr(request, '_stream'):
+            try:
+                stream = request._stream
+                if stream and hasattr(stream, 'read'):
+                    current_pos = stream.tell() if hasattr(stream, 'tell') else None
+                    if hasattr(stream, 'seek'):
+                        stream.seek(0)
+                    body_content = stream.read()
+                    logger.info(f"Read from _stream: {body_content}")
+                    if current_pos is not None and hasattr(stream, 'seek'):
+                        stream.seek(current_pos)
+            except Exception as e:
+                logger.error(f"Failed to read from _stream: {e}")
+        
+        # Method 3: Use request.body if available
+        if not body_content and request.body:
+            body_content = request.body
+            logger.info(f"Using request.body: {body_content}")
+        
+        # Now try to parse the body content
+        if body_content:
+            try:
+                if isinstance(body_content, bytes):
+                    body_str = body_content.decode('utf-8')
+                else:
+                    body_str = str(body_content)
                 logger.info(f"Decoded body string: {body_str}")
                 data = json.loads(body_str)
-                logger.info(f"Successfully parsed JSON from request.body: {data}")
+                logger.info(f"Successfully parsed JSON: {data}")
             except (json.JSONDecodeError, UnicodeDecodeError) as e:
-                logger.error(f"Failed to parse request.body as JSON: {e}")
+                logger.error(f"Failed to parse as JSON: {e}")
                 # Try URL-encoded format
                 try:
                     from urllib.parse import parse_qs

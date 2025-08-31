@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views
+from . import views, views_raw
 
 app_name = 'machine'
 
@@ -9,7 +9,8 @@ urlpatterns = [
     path('api/status/', views.machine_status, name='machine_status'),
     path('api/connect/', views.connect_machine, name='connect_machine'),
     path('api/disconnect/', views.disconnect_machine, name='disconnect_machine'),
-    path('api/deliver/', views.deliver_coffee, name='deliver_coffee'),
+    path('api/deliver/', views_raw.deliver_coffee_raw, name='deliver_coffee'),
+    path('api/deliver_old/', views.deliver_coffee, name='deliver_coffee_old'),
     path('api/stop/', views.stop_delivery, name='stop_delivery'),
     path('api/purge/', views.start_purge, name='start_purge'),
     path('api/health/', views.health_check, name='health_check'),
