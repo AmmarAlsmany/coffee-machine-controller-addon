@@ -323,7 +323,7 @@
                 
                 // Use URL-encoded form data
                 const params = new URLSearchParams();
-                params.append('group_number', parseInt(group));
+                params.append('group_number', group);
                 params.append('coffee_type', type);
                 
                 console.log('Sending URL-encoded data with group_number:', parseInt(group), 'coffee_type:', type);
