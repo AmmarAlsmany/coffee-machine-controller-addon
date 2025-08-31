@@ -321,21 +321,21 @@
                 
                 this.setButtonLoading(button, true);
                 
-                const payload = {
-                    group_number: parseInt(group),
-                    coffee_type: type
-                };
+                // Create FormData instead of JSON
+                const formData = new FormData();
+                formData.append('group_number', parseInt(group));
+                formData.append('coffee_type', type);
                 
-                console.log('Sending payload:', payload);
+                console.log('Sending FormData with group_number:', parseInt(group), 'coffee_type:', type);
                 
                 try {
                     const response = await fetch(this.apiBaseUrl + '/api/deliver/', {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json',
                             'X-CSRFToken': this.getCSRFToken()
+                            // Don't set Content-Type, let the browser set it for FormData
                         },
-                        body: JSON.stringify(payload)
+                        body: formData
                     });
                     
                     const data = await response.json();
