@@ -185,35 +185,35 @@ def deliver_coffee(request):
         logger.info(f"=== DELIVER COFFEE REQUEST ===")
         logger.info(f"Method: {request.method}")
         logger.info(f"Content-Type: {request.content_type}")
-        logger.info(f"request.body: {request.body}")
+        logger.info(f"Headers: {dict(request.headers)}")
+        logger.info(f"request.body raw: {request.body}")
+        logger.info(f"request.body decoded: {request.body.decode('utf-8') if request.body else 'Empty'}")
         logger.info(f"request.POST: {request.POST}")
         logger.info(f"request.data (DRF): {getattr(request, 'data', 'Not available')}")
         
-        # Initialize data
+        # Initialize data - Always try request.data first (DRF handles all parsing)
         data = {}
         
-        # Simplified data parsing - prioritize JSON
-        if 'application/json' in request.content_type:
-            logger.info("Processing JSON")
-            # DRF automatically parses JSON into request.data
+        # DRF's request.data should handle all content types
+        if hasattr(request, 'data'):
             data = request.data
-            logger.info(f"Using request.data (JSON): {data}")
-        # Check if it's URL-encoded form data
-        elif 'application/x-www-form-urlencoded' in request.content_type:
-            logger.info("Processing URL-encoded form data")
-            # DRF should parse this into request.data
-            data = request.data
-            logger.info(f"Using request.data (URL-encoded): {data}")
-        # Check if it's multipart/form-data
-        elif 'multipart/form-data' in request.content_type:
-            logger.info("Processing multipart/form-data")
-            data = request.data
-            logger.info(f"Using request.data (multipart): {data}")
-        # Fall back to request.data for any other content type
+            logger.info(f"Using request.data: {data}")
+            logger.info(f"request.data type: {type(data)}")
+        # Fallback to manual parsing if needed
+        elif request.body:
+            logger.info("No request.data, trying manual parsing")
+            try:
+                # Try JSON first
+                data = json.loads(request.body.decode('utf-8'))
+                logger.info(f"Parsed as JSON: {data}")
+            except json.JSONDecodeError:
+                # Try URL-encoded
+                from urllib.parse import parse_qs
+                parsed = parse_qs(request.body.decode('utf-8'))
+                data = {k: v[0] if isinstance(v, list) and v else v for k, v in parsed.items()}
+                logger.info(f"Parsed as URL-encoded: {data}")
         else:
-            logger.info(f"Unknown content type, using request.data")
-            data = request.data
-            logger.info(f"Using request.data (fallback): {data}")
+            logger.warning("No data found in request")
         
         logger.info(f"Final data: {data}")
         logger.info(f"Data type: {type(data)}")
