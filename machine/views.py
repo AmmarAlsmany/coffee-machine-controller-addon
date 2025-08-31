@@ -180,33 +180,27 @@ def disconnect_machine(request):
 def deliver_coffee(request):
     """Deliver coffee"""
     try:
-        # Try to get data from multiple sources to handle different content types
-        data = None
+        # Parse JSON from request body directly - this is the most reliable way
+        import json
         
-        # First try request.data (DRF parsed data)
-        if hasattr(request, 'data') and request.data:
-            data = request.data
-            logger.info(f"Using request.data: {data}")
-        # Then try request.POST for form data
-        elif request.POST:
-            data = request.POST
-            logger.info(f"Using request.POST: {data}")
-        # Finally try to parse JSON from body
-        elif request.body:
+        # Always try to parse JSON from body first
+        if request.body:
             try:
-                import json
                 data = json.loads(request.body.decode('utf-8'))
                 logger.info(f"Parsed JSON from body: {data}")
             except (json.JSONDecodeError, UnicodeDecodeError) as e:
                 logger.error(f"Failed to parse JSON from body: {e}")
-                data = {}
+                # Fallback to request.data if JSON parsing fails
+                data = getattr(request, 'data', {})
+                logger.info(f"Fallback to request.data: {data}")
         else:
-            data = {}
+            # No body, try request.data
+            data = getattr(request, 'data', {})
+            logger.info(f"No body, using request.data: {data}")
             
-        logger.info(f"Final request data: {data}")
         logger.info(f"Request method: {request.method}")
         logger.info(f"Request content type: {request.content_type}")
-        logger.info(f"Request headers: {dict(request.headers)}")
+        logger.info(f"Request body (first 500 chars): {request.body[:500] if request.body else 'No body'}")
         
         group_number = data.get('group_number')
         coffee_type = data.get('coffee_type')
