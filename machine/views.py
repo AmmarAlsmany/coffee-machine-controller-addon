@@ -180,24 +180,54 @@ def disconnect_machine(request):
 def deliver_coffee(request):
     """Deliver coffee"""
     try:
-        # DRF's request.data should handle FormData, JSON, and other formats automatically
-        data = request.data
+        import json
         
         logger.info(f"=== DELIVER COFFEE REQUEST ===")
         logger.info(f"Method: {request.method}")
         logger.info(f"Content-Type: {request.content_type}")
-        logger.info(f"Request data: {data}")
-        logger.info(f"Request data type: {type(data)}")
         
-        # Get values from data - handle both single values and lists
+        # Initialize data
+        data = {}
+        
+        # Check if it's URL-encoded form data
+        if 'application/x-www-form-urlencoded' in request.content_type:
+            logger.info("Processing URL-encoded form data")
+            # Parse URL-encoded data from body
+            if request.body:
+                from urllib.parse import parse_qs
+                parsed = parse_qs(request.body.decode('utf-8'))
+                logger.info(f"Parsed URL params: {parsed}")
+                # Convert lists to single values
+                data = {k: v[0] if isinstance(v, list) and v else v for k, v in parsed.items()}
+            else:
+                data = dict(request.POST)
+        # Check if it's multipart/form-data
+        elif 'multipart/form-data' in request.content_type:
+            logger.info("Processing multipart/form-data")
+            data = dict(request.POST)
+            logger.info(f"request.POST: {request.POST}")
+            # Flatten lists if necessary
+            for key, value in data.items():
+                if isinstance(value, list) and len(value) == 1:
+                    data[key] = value[0]
+        # Check if it's JSON
+        elif 'application/json' in request.content_type:
+            logger.info("Processing JSON")
+            if request.body:
+                try:
+                    data = json.loads(request.body.decode('utf-8'))
+                except:
+                    data = request.data
+        # Fall back to request.data
+        else:
+            data = request.data
+        
+        logger.info(f"Final data: {data}")
+        logger.info(f"Data type: {type(data)}")
+        
+        # Get values from data
         group_number = data.get('group_number')
         coffee_type = data.get('coffee_type')
-        
-        # If they come as lists (from FormData), take the first value
-        if isinstance(group_number, list):
-            group_number = group_number[0] if group_number else None
-        if isinstance(coffee_type, list):
-            coffee_type = coffee_type[0] if coffee_type else None
         
         logger.info(f"Deliver coffee request: group={group_number}, type={coffee_type}")
         
