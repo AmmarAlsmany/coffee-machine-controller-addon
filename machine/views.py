@@ -184,8 +184,13 @@ def deliver_coffee(request):
         
         logger.info(f"=== DELIVER COFFEE REQUEST (Pure Django) ===")
         logger.info(f"Method: {request.method}")
+        logger.info(f"Path: {request.path}")
+        logger.info(f"Full Path: {request.get_full_path()}")
         logger.info(f"Content-Type: {request.content_type}")
+        logger.info(f"Content-Length: {request.headers.get('Content-Length', 'Not set')}")
         logger.info(f"Headers: {dict(request.headers)}")
+        logger.info(f"request.body exists: {bool(request.body)}")
+        logger.info(f"request.body length: {len(request.body) if request.body else 0}")
         logger.info(f"request.body raw bytes: {request.body}")
         logger.info(f"request.body decoded: {request.body.decode('utf-8') if request.body else 'Empty'}")
         logger.info(f"request.POST: {request.POST}")
@@ -454,19 +459,19 @@ def delivery_history(request):
         )
 
 @csrf_exempt
-@api_view(['POST'])
+@require_http_methods(['POST'])
 def test_post(request):
-    """Test endpoint to debug POST data"""
+    """Test endpoint to debug POST data - Pure Django"""
     import json
-    logger.info("=== TEST POST ENDPOINT ===")
+    logger.info("=== TEST POST ENDPOINT (Pure Django) ===")
     
     response_data = {
         'method': request.method,
         'content_type': request.content_type,
         'headers': dict(request.headers),
         'body_exists': bool(request.body),
+        'body_length': len(request.body) if request.body else 0,
         'body_decoded': request.body.decode('utf-8') if request.body else None,
-        'request_data': request.data,
         'request_POST': dict(request.POST),
     }
     
@@ -474,11 +479,12 @@ def test_post(request):
     if request.body:
         try:
             response_data['parsed_json'] = json.loads(request.body.decode('utf-8'))
-        except:
+        except Exception as e:
             response_data['parsed_json'] = None
+            response_data['parse_error'] = str(e)
     
     logger.info(f"Test response: {response_data}")
-    return Response(response_data)
+    return JsonResponse(response_data)
 
 @api_view(['GET'])
 def maintenance_logs(request):
