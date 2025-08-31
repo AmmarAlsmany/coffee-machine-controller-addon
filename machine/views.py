@@ -175,32 +175,53 @@ def disconnect_machine(request):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
-@api_view(['POST'])
 @csrf_exempt
+@api_view(['POST'])
 def deliver_coffee(request):
     """Deliver coffee"""
     try:
-        # Parse JSON from request body directly - this is the most reliable way
         import json
         
-        # Always try to parse JSON from body first
+        # Log raw request details
+        logger.info(f"=== DELIVER COFFEE REQUEST ===")
+        logger.info(f"Method: {request.method}")
+        logger.info(f"Content-Type: {request.content_type}")
+        logger.info(f"Body exists: {bool(request.body)}")
+        logger.info(f"Body length: {len(request.body) if request.body else 0}")
+        logger.info(f"Raw body: {request.body[:1000] if request.body else 'No body'}")
+        
+        # Try multiple ways to get the data
+        data = None
+        
+        # Method 1: Parse JSON from body directly
         if request.body:
             try:
                 data = json.loads(request.body.decode('utf-8'))
-                logger.info(f"Parsed JSON from body: {data}")
-            except (json.JSONDecodeError, UnicodeDecodeError) as e:
-                logger.error(f"Failed to parse JSON from body: {e}")
-                # Fallback to request.data if JSON parsing fails
-                data = getattr(request, 'data', {})
-                logger.info(f"Fallback to request.data: {data}")
-        else:
-            # No body, try request.data
-            data = getattr(request, 'data', {})
-            logger.info(f"No body, using request.data: {data}")
-            
-        logger.info(f"Request method: {request.method}")
-        logger.info(f"Request content type: {request.content_type}")
-        logger.info(f"Request body (first 500 chars): {request.body[:500] if request.body else 'No body'}")
+                logger.info(f"SUCCESS: Parsed JSON from body: {data}")
+            except Exception as e:
+                logger.error(f"Failed to parse body as JSON: {e}")
+        
+        # Method 2: Use DRF's request.data
+        if data is None and hasattr(request, 'data'):
+            try:
+                data = dict(request.data)
+                logger.info(f"Using DRF request.data: {data}")
+            except:
+                data = request.data
+                logger.info(f"Using DRF request.data (raw): {data}")
+        
+        # Method 3: Check POST data
+        if data is None and request.POST:
+            data = dict(request.POST)
+            logger.info(f"Using request.POST: {data}")
+        
+        # Final fallback
+        if data is None:
+            data = {}
+            logger.error("NO DATA FOUND IN REQUEST")
+        
+        logger.info(f"Final data object: {data}")
+        logger.info(f"Data type: {type(data)}")
         
         group_number = data.get('group_number')
         coffee_type = data.get('coffee_type')
