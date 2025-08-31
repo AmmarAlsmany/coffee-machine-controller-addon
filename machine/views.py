@@ -180,47 +180,15 @@ def disconnect_machine(request):
 def deliver_coffee(request):
     """Deliver coffee"""
     try:
-        import json
-        
         logger.info(f"=== DELIVER COFFEE REQUEST ===")
         logger.info(f"Method: {request.method}")
         logger.info(f"Content-Type: {request.content_type}")
-        logger.info(f"Headers: {dict(request.headers)}")
-        logger.info(f"request.body raw: {request.body}")
-        logger.info(f"request.body decoded: {request.body.decode('utf-8') if request.body else 'Empty'}")
-        logger.info(f"request.POST: {request.POST}")
-        logger.info(f"request.data (DRF): {getattr(request, 'data', 'Not available')}")
+        logger.info(f"request.data: {request.data}")
         
-        # Initialize data - Always try request.data first (DRF handles all parsing)
-        data = {}
-        
-        # DRF's request.data should handle all content types
-        if hasattr(request, 'data'):
-            data = request.data
-            logger.info(f"Using request.data: {data}")
-            logger.info(f"request.data type: {type(data)}")
-        # Fallback to manual parsing if needed
-        elif request.body:
-            logger.info("No request.data, trying manual parsing")
-            try:
-                # Try JSON first
-                data = json.loads(request.body.decode('utf-8'))
-                logger.info(f"Parsed as JSON: {data}")
-            except json.JSONDecodeError:
-                # Try URL-encoded
-                from urllib.parse import parse_qs
-                parsed = parse_qs(request.body.decode('utf-8'))
-                data = {k: v[0] if isinstance(v, list) and v else v for k, v in parsed.items()}
-                logger.info(f"Parsed as URL-encoded: {data}")
-        else:
-            logger.warning("No data found in request")
-        
-        logger.info(f"Final data: {data}")
-        logger.info(f"Data type: {type(data)}")
-        
+        # Since we're using @api_view, request.data is always available
         # Get values from data - handle both string and int types
-        group_number = data.get('group_number')
-        coffee_type = data.get('coffee_type')
+        group_number = request.data.get('group_number')
+        coffee_type = request.data.get('coffee_type')
         
         logger.info(f"Deliver coffee request: group={group_number} (type: {type(group_number)}), coffee_type={coffee_type}")
         
