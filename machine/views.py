@@ -185,71 +185,58 @@ def deliver_coffee(request):
         logger.info(f"=== DELIVER COFFEE REQUEST ===")
         logger.info(f"Method: {request.method}")
         logger.info(f"Content-Type: {request.content_type}")
+        logger.info(f"request.body: {request.body}")
+        logger.info(f"request.POST: {request.POST}")
+        logger.info(f"request.data (DRF): {getattr(request, 'data', 'Not available')}")
         
         # Initialize data
         data = {}
         
+        # Simplified data parsing - prioritize JSON
+        if 'application/json' in request.content_type:
+            logger.info("Processing JSON")
+            # DRF automatically parses JSON into request.data
+            data = request.data
+            logger.info(f"Using request.data (JSON): {data}")
         # Check if it's URL-encoded form data
-        if 'application/x-www-form-urlencoded' in request.content_type:
+        elif 'application/x-www-form-urlencoded' in request.content_type:
             logger.info("Processing URL-encoded form data")
-            # First try request.POST (Django's parsed form data)
-            if request.POST:
-                data = dict(request.POST)
-                logger.info(f"request.POST: {request.POST}")
-                # Flatten lists if necessary
-                for key, value in data.items():
-                    if isinstance(value, list) and len(value) == 1:
-                        data[key] = value[0]
-            # Otherwise parse URL-encoded data from body
-            elif request.body:
-                from urllib.parse import parse_qs
-                parsed = parse_qs(request.body.decode('utf-8'))
-                logger.info(f"Parsed URL params: {parsed}")
-                # Convert lists to single values
-                data = {k: v[0] if isinstance(v, list) and v else v for k, v in parsed.items()}
-            else:
-                logger.warning("No form data found in request.POST or request.body")
-                data = {}
+            # DRF should parse this into request.data
+            data = request.data
+            logger.info(f"Using request.data (URL-encoded): {data}")
         # Check if it's multipart/form-data
         elif 'multipart/form-data' in request.content_type:
             logger.info("Processing multipart/form-data")
-            data = dict(request.POST)
-            logger.info(f"request.POST: {request.POST}")
-            # Flatten lists if necessary
-            for key, value in data.items():
-                if isinstance(value, list) and len(value) == 1:
-                    data[key] = value[0]
-        # Check if it's JSON
-        elif 'application/json' in request.content_type:
-            logger.info("Processing JSON")
-            if request.body:
-                try:
-                    data = json.loads(request.body.decode('utf-8'))
-                except:
-                    data = request.data
-        # Fall back to request.data
-        else:
             data = request.data
+            logger.info(f"Using request.data (multipart): {data}")
+        # Fall back to request.data for any other content type
+        else:
+            logger.info(f"Unknown content type, using request.data")
+            data = request.data
+            logger.info(f"Using request.data (fallback): {data}")
         
         logger.info(f"Final data: {data}")
         logger.info(f"Data type: {type(data)}")
         
-        # Get values from data
+        # Get values from data - handle both string and int types
         group_number = data.get('group_number')
         coffee_type = data.get('coffee_type')
         
-        logger.info(f"Deliver coffee request: group={group_number}, type={coffee_type}")
+        logger.info(f"Deliver coffee request: group={group_number} (type: {type(group_number)}), coffee_type={coffee_type}")
         
-        if not group_number or not coffee_type:
+        if group_number is None or coffee_type is None:
             logger.warning(f"Missing parameters: group_number={group_number}, coffee_type={coffee_type}")
+            logger.warning(f"Available keys in data: {list(data.keys())}")
             return Response(
                 {'success': False, 'message': 'group_number and coffee_type are required', 'error': 'Missing parameters'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
         
+        # Convert group_number to int, handling both string and numeric inputs
         try:
-            group_number = int(group_number)
-        except (ValueError, TypeError):
+            group_number = int(str(group_number))
+        except (ValueError, TypeError) as e:
+            logger.error(f"Failed to convert group_number: {group_number}, error: {e}")
             return Response(
                 {'success': False, 'message': f'Invalid group_number: {group_number}', 'error': 'Invalid group_number'}, 
                 status=status.HTTP_400_BAD_REQUEST

@@ -196,24 +196,42 @@
                 document.getElementById('connectBtn')?.addEventListener('click', () => this.connect());
                 document.getElementById('disconnectBtn')?.addEventListener('click', () => this.disconnect());
                 
-                // Coffee delivery buttons
+                // Coffee delivery buttons with fixed mappings
                 document.querySelectorAll('.coffee-btn').forEach(btn => {
                     btn.addEventListener('click', (e) => {
-                        // Use currentTarget instead of target to always get the button element
                         const button = e.currentTarget;
-                        const group = button.dataset.group;
-                        const type = button.dataset.type;
                         
-                        console.log('Coffee button clicked:', { group, type, button });
+                        // Get button text to determine type
+                        const btnText = button.querySelector('.btn-text')?.textContent?.trim() || '';
                         
-                        if (!group || !type) {
-                            console.error('Missing data attributes:', { 
-                                group, 
-                                type, 
-                                dataset: button.dataset,
-                                element: button
-                            });
-                            this.showToast('Error', 'Button configuration error', 'error');
+                        // Determine group from parent structure
+                        const groupSection = button.closest('.coffee-group');
+                        let group = '1'; // default
+                        
+                        if (groupSection) {
+                            const groupTitle = groupSection.querySelector('h6')?.textContent || '';
+                            if (groupTitle.includes('Group 1')) group = '1';
+                            else if (groupTitle.includes('Group 2')) group = '2';
+                            else if (groupTitle.includes('Group 3')) group = '3';
+                        }
+                        
+                        // Fixed mapping for coffee types based on button text
+                        const coffeeTypeMap = {
+                            'Single Short': 'single_short',
+                            'Single Medium': 'single_medium',
+                            'Single Long': 'single_long',
+                            'Double Short': 'double_short',
+                            'Double Medium': 'double_medium',
+                            'Double Long': 'double_long'
+                        };
+                        
+                        const type = coffeeTypeMap[btnText];
+                        
+                        console.log('Coffee button clicked:', { btnText, group, type });
+                        
+                        if (!type) {
+                            console.error('Unknown coffee type for button:', btnText);
+                            this.showToast('Error', 'Unknown coffee type', 'error');
                             return;
                         }
                         
@@ -321,21 +339,22 @@
                 
                 this.setButtonLoading(button, true);
                 
-                // Use URL-encoded form data
-                const params = new URLSearchParams();
-                params.append('group_number', group);
-                params.append('coffee_type', type);
+                // Create fixed request data
+                const requestData = {
+                    group_number: group,
+                    coffee_type: type
+                };
                 
-                console.log('Sending URL-encoded data with group_number:', parseInt(group), 'coffee_type:', type);
+                console.log('Sending fixed JSON data:', requestData);
                 
                 try {
                     const response = await fetch(this.apiBaseUrl + '/api/deliver/', {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'Content-Type': 'application/json',
                             'X-CSRFToken': this.getCSRFToken()
                         },
-                        body: params.toString()
+                        body: JSON.stringify(requestData)
                     });
                     
                     const data = await response.json();
