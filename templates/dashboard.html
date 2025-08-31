@@ -75,6 +75,10 @@
                             <span class="visually-hidden">Loading...</span>
                         </div>
                     </button>
+                    <button id="testPostBtn" class="btn btn-outline-secondary" onclick="testPost()">
+                        <i class="fas fa-vial me-2"></i>
+                        <span class="btn-text">Test POST</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -391,6 +395,37 @@ document.addEventListener('DOMContentLoaded', function() {
         loadMaintenanceLogs();
     }, 30000);
 });
+
+async function testPost() {
+    const apiBaseUrl = getApiBaseUrl();
+    const testData = {
+        group_number: 1,
+        coffee_type: "test_coffee"
+    };
+    
+    console.log('=== TEST POST ===');
+    console.log('URL:', apiBaseUrl + '/api/test/');
+    console.log('Sending data:', testData);
+    
+    try {
+        const response = await fetch(apiBaseUrl + '/api/test/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(testData),
+            credentials: 'include'
+        });
+        
+        const data = await response.json();
+        console.log('Test Response:', data);
+        alert('Check console for test results');
+    } catch (error) {
+        console.error('Test failed:', error);
+        alert('Test failed - check console');
+    }
+}
 
 function getApiBaseUrl() {
     // Check if we're running through a proxy by looking at the current URL

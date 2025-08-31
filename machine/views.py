@@ -186,25 +186,24 @@ def deliver_coffee(request):
         logger.info(f"Method: {request.method}")
         logger.info(f"Content-Type: {request.content_type}")
         logger.info(f"Headers: {dict(request.headers)}")
-        logger.info(f"request.body: {request.body}")
+        logger.info(f"request.body raw bytes: {request.body}")
+        logger.info(f"request.body decoded: {request.body.decode('utf-8') if request.body else 'Empty'}")
         logger.info(f"request.data: {request.data}")
         logger.info(f"request.data type: {type(request.data)}")
+        logger.info(f"request.POST: {request.POST}")
         
         # Try multiple methods to get the data (for proxy compatibility)
         data = None
         
-        # Method 1: Use request.data (DRF standard)
-        if request.data:
-            data = request.data
-            logger.info(f"Using request.data: {data}")
-        # Method 2: Parse request.body if request.data is empty
-        elif request.body:
+        # Method 1: Always try to parse request.body first if it exists
+        if request.body:
             try:
                 body_str = request.body.decode('utf-8')
+                logger.info(f"Decoded body string: {body_str}")
                 data = json.loads(body_str)
-                logger.info(f"Parsed from request.body: {data}")
+                logger.info(f"Successfully parsed JSON from request.body: {data}")
             except (json.JSONDecodeError, UnicodeDecodeError) as e:
-                logger.error(f"Failed to parse request.body: {e}")
+                logger.error(f"Failed to parse request.body as JSON: {e}")
                 # Try URL-encoded format
                 try:
                     from urllib.parse import parse_qs
@@ -214,10 +213,23 @@ def deliver_coffee(request):
                 except Exception as e2:
                     logger.error(f"Failed to parse as URL-encoded: {e2}")
         
-        # If still no data, return error
+        # Method 2: If no data yet and request.data exists and is not empty
+        if not data and request.data:
+            # Check if request.data is a dict-like object
+            if isinstance(request.data, dict) and len(request.data) > 0:
+                data = request.data
+                logger.info(f"Using request.data: {data}")
+        
+        # Method 3: Try request.POST as last resort
+        if not data and request.POST:
+            data = dict(request.POST)
+            logger.info(f"Using request.POST: {data}")
+        
+        # If still no data, log everything we can
         if not data:
             data = {}
             logger.error("No data could be parsed from request")
+            logger.error(f"request.__dict__: {request.__dict__}")
         
         # Get values from data - handle both string and int types
         group_number = data.get('group_number')
@@ -449,6 +461,33 @@ def delivery_history(request):
             {'error': str(e)}, 
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+@csrf_exempt
+@api_view(['POST'])
+def test_post(request):
+    """Test endpoint to debug POST data"""
+    import json
+    logger.info("=== TEST POST ENDPOINT ===")
+    
+    response_data = {
+        'method': request.method,
+        'content_type': request.content_type,
+        'headers': dict(request.headers),
+        'body_exists': bool(request.body),
+        'body_decoded': request.body.decode('utf-8') if request.body else None,
+        'request_data': request.data,
+        'request_POST': dict(request.POST),
+    }
+    
+    # Try to parse body
+    if request.body:
+        try:
+            response_data['parsed_json'] = json.loads(request.body.decode('utf-8'))
+        except:
+            response_data['parsed_json'] = None
+    
+    logger.info(f"Test response: {response_data}")
+    return Response(response_data)
 
 @api_view(['GET'])
 def maintenance_logs(request):

@@ -15,4 +15,5 @@ urlpatterns = [
     path('api/health/', views.health_check, name='health_check'),
     path('api/history/', views.delivery_history, name='delivery_history'),
     path('api/logs/', views.maintenance_logs, name='maintenance_logs'),
+    path('api/test/', views.test_post, name='test_post'),
 ]
