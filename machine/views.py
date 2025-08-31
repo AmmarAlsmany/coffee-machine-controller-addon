@@ -3,7 +3,7 @@ from django.shortcuts import render
 # Create your views here.
 import json
 from django.shortcuts import render
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.core.cache import cache
@@ -176,20 +176,18 @@ def disconnect_machine(request):
         )
 
 @csrf_exempt
-@api_view(['POST'])
+@require_http_methods(['POST'])
 def deliver_coffee(request):
-    """Deliver coffee"""
+    """Deliver coffee - Pure Django version without DRF"""
     try:
         import json
         
-        logger.info(f"=== DELIVER COFFEE REQUEST ===")
+        logger.info(f"=== DELIVER COFFEE REQUEST (Pure Django) ===")
         logger.info(f"Method: {request.method}")
         logger.info(f"Content-Type: {request.content_type}")
         logger.info(f"Headers: {dict(request.headers)}")
         logger.info(f"request.body raw bytes: {request.body}")
         logger.info(f"request.body decoded: {request.body.decode('utf-8') if request.body else 'Empty'}")
-        logger.info(f"request.data: {request.data}")
-        logger.info(f"request.data type: {type(request.data)}")
         logger.info(f"request.POST: {request.POST}")
         
         # Try multiple methods to get the data (for proxy compatibility)
@@ -213,14 +211,7 @@ def deliver_coffee(request):
                 except Exception as e2:
                     logger.error(f"Failed to parse as URL-encoded: {e2}")
         
-        # Method 2: If no data yet and request.data exists and is not empty
-        if not data and request.data:
-            # Check if request.data is a dict-like object
-            if isinstance(request.data, dict) and len(request.data) > 0:
-                data = request.data
-                logger.info(f"Using request.data: {data}")
-        
-        # Method 3: Try request.POST as last resort
+        # Method 2: Try request.POST as fallback
         if not data and request.POST:
             data = dict(request.POST)
             logger.info(f"Using request.POST: {data}")
@@ -240,9 +231,9 @@ def deliver_coffee(request):
         if group_number is None or coffee_type is None:
             logger.warning(f"Missing parameters: group_number={group_number}, coffee_type={coffee_type}")
             logger.warning(f"Available keys in data: {list(data.keys()) if data else []}")
-            return Response(
+            return JsonResponse(
                 {'success': False, 'message': 'group_number and coffee_type are required', 'error': 'Missing parameters'}, 
-                status=status.HTTP_400_BAD_REQUEST
+                status=400
             )
         
         # Convert group_number to int, handling both string and numeric inputs
@@ -250,23 +241,23 @@ def deliver_coffee(request):
             group_number = int(str(group_number))
         except (ValueError, TypeError) as e:
             logger.error(f"Failed to convert group_number: {group_number}, error: {e}")
-            return Response(
+            return JsonResponse(
                 {'success': False, 'message': f'Invalid group_number: {group_number}', 'error': 'Invalid group_number'}, 
-                status=status.HTTP_400_BAD_REQUEST
+                status=400
             )
         
         if not (1 <= group_number <= 3):
-            return Response(
+            return JsonResponse(
                 {'success': False, 'message': f'group_number must be between 1 and 3, got {group_number}', 'error': 'Invalid group_number'}, 
-                status=status.HTTP_400_BAD_REQUEST
+                status=400
             )
         
         # Validate coffee_type
         valid_types = ['single_short', 'single_medium', 'single_long', 'double_short', 'double_medium', 'double_long']
         if coffee_type not in valid_types:
-            return Response(
+            return JsonResponse(
                 {'success': False, 'message': f'Invalid coffee_type: {coffee_type}. Must be one of {valid_types}', 'error': 'Invalid coffee_type'}, 
-                status=status.HTTP_400_BAD_REQUEST
+                status=400
             )
         
         # Create delivery record
@@ -278,9 +269,9 @@ def deliver_coffee(request):
             )
         except Exception as db_error:
             logger.error(f"Database error creating delivery: {db_error}")
-            return Response(
+            return JsonResponse(
                 {'success': False, 'message': f'Database error: {str(db_error)}', 'error': 'Database error'}, 
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                status=500
             )
         
         try:
@@ -291,7 +282,7 @@ def deliver_coffee(request):
                 delivery.status = 'in_progress'
                 delivery.save()
                 
-                return Response({
+                return JsonResponse({
                     'success': True,
                     'message': result['message'],
                     'delivery_id': delivery.id,
@@ -302,9 +293,9 @@ def deliver_coffee(request):
                 delivery.error_message = result['message']
                 delivery.save()
                 
-                return Response(
+                return JsonResponse(
                     {'success': False, 'message': result['message']}, 
-                    status=status.HTTP_400_BAD_REQUEST
+                    status=400
                 )
                 
         except Exception as e:
@@ -315,9 +306,9 @@ def deliver_coffee(request):
             
     except Exception as e:
         logger.error(f"Error delivering coffee: {e}")
-        return Response(
+        return JsonResponse(
             {'error': str(e)}, 
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            status=500
         )
 
 @api_view(['POST'])
