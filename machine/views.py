@@ -192,15 +192,24 @@ def deliver_coffee(request):
         # Check if it's URL-encoded form data
         if 'application/x-www-form-urlencoded' in request.content_type:
             logger.info("Processing URL-encoded form data")
-            # Parse URL-encoded data from body
-            if request.body:
+            # First try request.POST (Django's parsed form data)
+            if request.POST:
+                data = dict(request.POST)
+                logger.info(f"request.POST: {request.POST}")
+                # Flatten lists if necessary
+                for key, value in data.items():
+                    if isinstance(value, list) and len(value) == 1:
+                        data[key] = value[0]
+            # Otherwise parse URL-encoded data from body
+            elif request.body:
                 from urllib.parse import parse_qs
                 parsed = parse_qs(request.body.decode('utf-8'))
                 logger.info(f"Parsed URL params: {parsed}")
                 # Convert lists to single values
                 data = {k: v[0] if isinstance(v, list) and v else v for k, v in parsed.items()}
             else:
-                data = dict(request.POST)
+                logger.warning("No form data found in request.POST or request.body")
+                data = {}
         # Check if it's multipart/form-data
         elif 'multipart/form-data' in request.content_type:
             logger.info("Processing multipart/form-data")
