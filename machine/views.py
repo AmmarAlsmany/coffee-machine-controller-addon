@@ -180,51 +180,24 @@ def disconnect_machine(request):
 def deliver_coffee(request):
     """Deliver coffee"""
     try:
-        import json
+        # DRF's request.data should handle FormData, JSON, and other formats automatically
+        data = request.data
         
-        # Log raw request details
         logger.info(f"=== DELIVER COFFEE REQUEST ===")
         logger.info(f"Method: {request.method}")
         logger.info(f"Content-Type: {request.content_type}")
-        logger.info(f"Body exists: {bool(request.body)}")
-        logger.info(f"Body length: {len(request.body) if request.body else 0}")
-        logger.info(f"Raw body: {request.body[:1000] if request.body else 'No body'}")
+        logger.info(f"Request data: {data}")
+        logger.info(f"Request data type: {type(data)}")
         
-        # Try multiple ways to get the data
-        data = None
-        
-        # Method 1: Parse JSON from body directly
-        if request.body:
-            try:
-                data = json.loads(request.body.decode('utf-8'))
-                logger.info(f"SUCCESS: Parsed JSON from body: {data}")
-            except Exception as e:
-                logger.error(f"Failed to parse body as JSON: {e}")
-        
-        # Method 2: Use DRF's request.data
-        if data is None and hasattr(request, 'data'):
-            try:
-                data = dict(request.data)
-                logger.info(f"Using DRF request.data: {data}")
-            except:
-                data = request.data
-                logger.info(f"Using DRF request.data (raw): {data}")
-        
-        # Method 3: Check POST data
-        if data is None and request.POST:
-            data = dict(request.POST)
-            logger.info(f"Using request.POST: {data}")
-        
-        # Final fallback
-        if data is None:
-            data = {}
-            logger.error("NO DATA FOUND IN REQUEST")
-        
-        logger.info(f"Final data object: {data}")
-        logger.info(f"Data type: {type(data)}")
-        
+        # Get values from data - handle both single values and lists
         group_number = data.get('group_number')
         coffee_type = data.get('coffee_type')
+        
+        # If they come as lists (from FormData), take the first value
+        if isinstance(group_number, list):
+            group_number = group_number[0] if group_number else None
+        if isinstance(coffee_type, list):
+            coffee_type = coffee_type[0] if coffee_type else None
         
         logger.info(f"Deliver coffee request: group={group_number}, type={coffee_type}")
         
