@@ -183,7 +183,10 @@ def deliver_coffee(request):
         logger.info(f"=== DELIVER COFFEE REQUEST ===")
         logger.info(f"Method: {request.method}")
         logger.info(f"Content-Type: {request.content_type}")
+        logger.info(f"Headers: {dict(request.headers)}")
+        logger.info(f"request.body: {request.body}")
         logger.info(f"request.data: {request.data}")
+        logger.info(f"request.data type: {type(request.data)}")
         
         # Since we're using @api_view, request.data is always available
         # Get values from data - handle both string and int types
@@ -194,7 +197,7 @@ def deliver_coffee(request):
         
         if group_number is None or coffee_type is None:
             logger.warning(f"Missing parameters: group_number={group_number}, coffee_type={coffee_type}")
-            logger.warning(f"Available keys in data: {list(data.keys())}")
+            logger.warning(f"Available keys in request.data: {list(request.data.keys())}")
             return Response(
                 {'success': False, 'message': 'group_number and coffee_type are required', 'error': 'Missing parameters'}, 
                 status=status.HTTP_400_BAD_REQUEST

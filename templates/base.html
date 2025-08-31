@@ -327,16 +327,22 @@
                     coffee_type: type
                 };
                 
-                console.log('Sending JSON data:', requestData);
+                const csrfToken = this.getCSRFToken();
+                const requestBody = JSON.stringify(requestData);
+                
+                console.log('Request URL:', this.apiBaseUrl + '/api/deliver/');
+                console.log('CSRF Token:', csrfToken ? 'Found' : 'Not found');
+                console.log('Request Body:', requestBody);
+                console.log('Request Data:', requestData);
                 
                 try {
                     const response = await fetch(this.apiBaseUrl + '/api/deliver/', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRFToken': this.getCSRFToken()
+                            'X-CSRFToken': csrfToken
                         },
-                        body: JSON.stringify(requestData)
+                        body: requestBody
                     });
                     
                     const data = await response.json();
@@ -582,6 +588,7 @@
             }
             
             getCSRFToken() {
+                // Try to get CSRF token from cookie
                 const cookies = document.cookie.split(';');
                 for (let cookie of cookies) {
                     const [name, value] = cookie.trim().split('=');
@@ -589,6 +596,12 @@
                         return value;
                     }
                 }
+                // If no cookie, try to get from meta tag (Django template)
+                const token = document.querySelector('[name=csrfmiddlewaretoken]');
+                if (token) {
+                    return token.value;
+                }
+                console.warn('No CSRF token found');
                 return '';
             }
         }
