@@ -1,13 +1,54 @@
-name: Build Add-on
+name: Builder
+
+env:
+  BUILD_ARGS: "--test"
+  MONITORED_FILES: "build.yaml config.yaml Dockerfile rootfs"
 
 on:
-  release:
-    types: ["published"]
-  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
+  init:
+    runs-on: ubuntu-latest
+    name: Initialize builds
+    outputs:
+      changed_addons: ${{ steps.changed_addons.outputs.addons }}
+      changed: ${{ steps.changed_addons.outputs.changed }}
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Get changed files
+        id: changed_files
+        uses: jitterbit/get-changed-files@v1
+
+      - name: Find add-on directories
+        id: changed_addons
+        run: |
+          declare -a changed_addons
+          for file in ${{ steps.changed_files.outputs.all }}; do
+            if [[ $file =~ $MONITORED_FILES ]]; then
+              changed_addons+=("coffee_machine_controller");
+              break;
+            fi
+          done
+
+          changed=$(printf "%s," "${changed_addons[@]}")
+          changed=${changed%,}
+
+          echo "Changed add-ons: $changed";
+          echo "changed=true" >> $GITHUB_OUTPUT
+          echo "addons=coffee_machine_controller" >> $GITHUB_OUTPUT
+
   build:
     runs-on: ubuntu-latest
+    needs: init
+    if: needs.init.outputs.changed == 'true'
     name: Build ${{ matrix.arch }} add-on
     strategy:
       matrix:
@@ -28,14 +69,12 @@ jobs:
       run: |
         if [[ "${{ steps.info.outputs.architectures }}" =~ ${{ matrix.arch }} ]]; then
            echo "build_arch=true" >> $GITHUB_OUTPUT
-           echo "BUILD_ARCH=true" >> $GITHUB_ENV
         else
            echo "build_arch=false" >> $GITHUB_OUTPUT
-           echo "BUILD_ARCH=false" >> $GITHUB_ENV
         fi
 
     - name: Login to GitHub Container Registry
-      if: env.BUILD_ARCH == 'true'
+      if: steps.check.outputs.build_arch == 'true'
       uses: docker/login-action@v3
       with:
         registry: ghcr.io
@@ -43,10 +82,11 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Build ${{ matrix.arch }} add-on
-      if: env.BUILD_ARCH == 'true'
+      if: steps.check.outputs.build_arch == 'true'
       uses: home-assistant/builder@master
       with:
         args: |
           --${{ matrix.arch }} \
           --target /data \
-          --generic ${{ steps.info.outputs.version }}
+          --docker-hub ghcr.io/${{ github.repository_owner }} \
+          ${{ env.BUILD_ARGS }}
