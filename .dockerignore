@@ -1,0 +1,53 @@
+# Git
+.git
+.gitignore
+
+# IDE
+.claude
+.idea/
+.vscode/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environment
+venv/
+env/
+ENV/
+
+# Database and logs
+*.sqlite3
+*.db
+*.log
+
+# Static files (will be collected in Docker)
+staticfiles/
+static/admin/
+static/rest_framework/
+
+# Home Assistant specific
+icon.png
+README_ADDON.md
+
+# Documentation
+README.md
+*.md

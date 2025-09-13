@@ -3,9 +3,9 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'your-secret-key-here'
-DEBUG = True
-ALLOWED_HOSTS = ['*']  # Allow all hosts for development - be more restrictive in production
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'your-secret-key-here')
+DEBUG = os.getenv('DJANGO_DEBUG', 'False').lower() == 'true'
+ALLOWED_HOSTS = ['*']  # Allow all hosts for Home Assistant Add-on
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -58,7 +58,7 @@ ASGI_APPLICATION = 'coffee_machine_controller.asgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': '/data/db.sqlite3' if os.path.exists('/data') else BASE_DIR / 'db.sqlite3',
     }
 }
 
@@ -74,23 +74,23 @@ REST_FRAMEWORK = {
     ],
 }
 
-# CORS settings
+# CORS settings - Allow Home Assistant and local access
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
     "http://localhost:8000",
     "http://127.0.0.1:8000",
-    "https://xrqlxhrnom02wtf3cfz3odga9u80vpyc.ui.nabu.casa",
+    "http://homeassistant.local:8123",
+    "http://supervisor",
 ]
-# Allow all origins for development (be careful in production)
+# Allow all origins for Home Assistant Add-on environment
 CORS_ALLOW_ALL_ORIGINS = True
 
-# CSRF settings for proxy/ingress
+# CSRF settings for Home Assistant proxy/ingress
 CSRF_TRUSTED_ORIGINS = [
-    'https://*.ui.nabu.casa',
-    'https://xrqlxhrnom02wtf3cfz3odga9u80vpyc.ui.nabu.casa',
+    'http://homeassistant.local:8123',
+    'http://supervisor',
     'http://localhost:8000',
     'http://127.0.0.1:8000',
+    'https://*.ui.nabu.casa',
 ]
 
 # Additional proxy settings
@@ -129,19 +129,24 @@ LOGGING = {
     'disable_existing_loggers': False,
     'handlers': {
         'file': {
-            'level': 'INFO',
+            'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
             'class': 'logging.FileHandler',
-            'filename': 'coffee_machine.log',
+            'filename': '/data/coffee_machine.log' if os.path.exists('/data') else 'coffee_machine.log',
         },
         'console': {
-            'level': 'DEBUG',
+            'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
             'class': 'logging.StreamHandler',
         },
     },
     'loggers': {
         'machine': {
             'handlers': ['file', 'console'],
-            'level': 'INFO',
+            'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
+            'propagate': True,
+        },
+        'django': {
+            'handlers': ['console'],
+            'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
             'propagate': True,
         },
     },
