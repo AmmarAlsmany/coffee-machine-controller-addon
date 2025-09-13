@@ -1,15 +1,9 @@
 name: Build Add-on
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
   release:
-    types:
-      - published
+    types: ["published"]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -34,8 +28,10 @@ jobs:
       run: |
         if [[ "${{ steps.info.outputs.architectures }}" =~ ${{ matrix.arch }} ]]; then
            echo "build_arch=true" >> $GITHUB_OUTPUT
+           echo "BUILD_ARCH=true" >> $GITHUB_ENV
         else
            echo "build_arch=false" >> $GITHUB_OUTPUT
+           echo "BUILD_ARCH=false" >> $GITHUB_ENV
         fi
 
     - name: Login to GitHub Container Registry
@@ -47,7 +43,7 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Build ${{ matrix.arch }} add-on
-      if: steps.check.outputs.build_arch == 'true'
+      if: env.BUILD_ARCH == 'true'
       uses: home-assistant/builder@master
       with:
         args: |

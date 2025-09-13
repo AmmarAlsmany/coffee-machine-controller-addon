@@ -43,7 +43,7 @@ schema:
   admin_password: str?
   admin_email: email?
 
-image: "ghcr.io/{repository_owner}/addon-coffee-machine-controller/{arch}"
+image: "ghcr.io/ammaralsmany/coffee-machine-controller-addon/{arch}"
 
 devices:
   - /dev/ttyUSB0
