@@ -6,7 +6,7 @@ class Command(BaseCommand):
     help = 'Debug Modbus communication with detailed diagnostics'
     
     def handle(self, *args, **options):
-        port = '/dev/ttyUSB1'
+        port = '/dev/ttyUSB0'
         
         # Test 1: Basic connection with different timeouts
         self.stdout.write("=== Test 1: Connection with different timeouts ===")

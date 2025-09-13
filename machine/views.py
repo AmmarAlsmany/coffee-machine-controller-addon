@@ -58,7 +58,7 @@ def machine_info(request):
             'is_blocked': 'Unknown',
             'machine_config': None,
             'connection_status': False,
-            'port': getattr(settings, 'COFFEE_MACHINE_PORT', '/dev/ttyUSB1'),
+            'port': getattr(settings, 'COFFEE_MACHINE_PORT', '/dev/ttyUSB0'),
             'baudrate': getattr(settings, 'COFFEE_MACHINE_BAUDRATE', 9600),
             'last_updated': None,
             'error': str(e)

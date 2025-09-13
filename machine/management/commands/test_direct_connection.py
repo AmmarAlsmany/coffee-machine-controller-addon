@@ -7,7 +7,7 @@ class Command(BaseCommand):
     help = 'Test direct connection to coffee machine'
 
     def handle(self, *args, **options):
-        port = '/dev/ttyUSB1'
+        port = '/dev/ttyUSB0'
         baudrate = 9600
         
         self.stdout.write(f"Testing connection to coffee machine...")

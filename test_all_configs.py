@@ -37,7 +37,7 @@ def test_config(port, baudrate, parity, stopbits, timeout=2):
         return False
 
 # Test all common configurations
-port = '/dev/ttyUSB1'
+port = '/dev/ttyUSB0'
 configs = [
     # baudrate, parity, stopbits
     (9600, 'N', 1),    # Default from documentation
