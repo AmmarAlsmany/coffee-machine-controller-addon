@@ -91,14 +91,19 @@ CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8000',
     'http://127.0.0.1:8000',
     'https://*.ui.nabu.casa',
+    'https://xrqlxhrnom02wtf3cfz3odga9u80vpyc.ui.nabu.casa',
 ]
 
-# Additional proxy settings
-USE_X_FORWARDED_HOST = True
+# Additional proxy settings for ingress
+USE_X_FORWARDED_HOST = os.getenv('USE_X_FORWARDED_HOST', 'True').lower() == 'true'
+USE_X_FORWARDED_PORT = os.getenv('USE_X_FORWARDED_PORT', 'True').lower() == 'true'
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
-# Static files
-STATIC_URL = '/static/'
+# Force script name for ingress paths
+FORCE_SCRIPT_NAME = os.getenv('FORCE_SCRIPT_NAME', None)
+
+# Static files with ingress support
+STATIC_URL = os.getenv('FORCE_SCRIPT_NAME', '') + '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 

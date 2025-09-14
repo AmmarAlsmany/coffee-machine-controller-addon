@@ -53,7 +53,17 @@ python manage.py migrate --noinput
 echo "Collecting static files..."
 python manage.py collectstatic --noinput --clear || echo "Static files collection skipped"
 
+# Set environment variables for ingress support
+export FORCE_SCRIPT_NAME="/api/hassio_ingress/$(cat /data/ingress_token 2>/dev/null || echo '')"
+export USE_X_FORWARDED_HOST=1
+export SECURE_PROXY_SSL_HEADER="('HTTP_X_FORWARDED_PROTO', 'https')"
+
 # Start the Django server
 echo "Starting Django server on port 8000..."
-echo "Access the interface at: http://homeassistant.local:8000"
+echo "=================================="
+echo "Access the interface through:"
+echo "1. Home Assistant Sidebar (if ingress configured)"
+echo "2. Nabu Casa URL (remote access)"
+echo "3. Local: http://homeassistant.local:8000"
+echo "=================================="
 python manage.py runserver 0.0.0.0:8000

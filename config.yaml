@@ -6,11 +6,16 @@
   "arch": ["armhf", "armv7", "aarch64", "amd64", "i386"],
   "startup": "application",
   "boot": "auto",
+  "ingress": true,
+  "ingress_port": 8000,
+  "ingress_entry": "/",
+  "panel_icon": "mdi:coffee",
+  "panel_title": "Coffee Machine",
   "ports": {
-    "8000/tcp": 8000
+    "8000/tcp": null
   },
   "ports_description": {
-    "8000/tcp": "Web interface"
+    "8000/tcp": "Web interface (not required when using ingress)"
   },
   "options": {
     "serial_port": "/dev/ttyUSB0",
@@ -21,5 +26,6 @@
     "baudrate": "int"
   },
   "devices": ["/dev/ttyUSB0", "/dev/ttyACM0"],
-  "host_network": false
+  "host_network": false,
+  "webui": "http://[HOST]:[PORT:8000]"
 }
