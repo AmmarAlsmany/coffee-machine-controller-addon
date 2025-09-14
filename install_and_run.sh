@@ -67,11 +67,21 @@ echo "Setting up database..."
 python3 manage.py migrate --noinput || python manage.py migrate --noinput
 
 # Start server
-echo "==================================="
-echo "Starting Coffee Machine Controller"
-echo "Access at: http://homeassistant.local:8000"
-echo "Or: http://YOUR-HA-IP:8000"
-echo "Press Ctrl+C to stop"
-echo "==================================="
+echo ""
+echo "=========================================="
+echo "🚀 STARTING COFFEE MACHINE CONTROLLER"
+echo "=========================================="
+echo ""
+echo "📱 Remote Access (Nabu Casa - Click to open):"
+echo "   https://xrqlxhrnom02wtf3cfz3odga9u80vpyc.ui.nabu.casa/api/hassio_ingress/YOUR_INGRESS_TOKEN/proxy/8000/"
+echo ""
+echo "🏠 Local Access Options:"
+echo "   http://homeassistant.local:8000"
+echo "   http://$(hostname -I | awk '{print $1}' 2>/dev/null || echo 'YOUR-IP'):8000"
+echo ""
+echo "=========================================="
+echo "Press Ctrl+C to stop the server"
+echo "=========================================="
+echo ""
 
 python3 manage.py runserver 0.0.0.0:8000 || python manage.py runserver 0.0.0.0:8000

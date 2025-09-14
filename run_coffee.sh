@@ -25,6 +25,18 @@ source venv/bin/activate || source venv/Scripts/activate
 pip install -r requirements.txt --quiet
 
 # Run the server
-echo "Starting Coffee Machine Controller..."
-echo "Access at: http://homeassistant.local:8000"
+echo ""
+echo "=========================================="
+echo "☕ COFFEE MACHINE CONTROLLER"
+echo "=========================================="
+echo ""
+echo "📱 Nabu Casa Remote URL (Click below):"
+echo "   https://xrqlxhrnom02wtf3cfz3odga9u80vpyc.ui.nabu.casa/api/hassio_ingress/YOUR_INGRESS_TOKEN/proxy/8000/"
+echo ""
+echo "🏠 Local Access:"
+echo "   http://homeassistant.local:8000"
+echo "   http://$(hostname -I | awk '{print $1}' 2>/dev/null || echo 'YOUR-IP'):8000"
+echo ""
+echo "=========================================="
+echo ""
 python manage.py runserver 0.0.0.0:8000
