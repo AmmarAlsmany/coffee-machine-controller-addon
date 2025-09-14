@@ -31,9 +31,9 @@ WORKDIR /app
 COPY requirements.txt ./
 
 # Upgrade pip and install Python dependencies
-RUN python3 -m pip install --no-cache-dir --upgrade pip setuptools wheel && \
-    python3 -m pip install --no-cache-dir --timeout=300 -r requirements.txt && \
-    python3 -m pip install --no-cache-dir gunicorn
+RUN python3 -m pip install --no-cache-dir --break-system-packages --upgrade pip setuptools wheel && \
+    python3 -m pip install --no-cache-dir --break-system-packages --timeout=300 -r requirements.txt && \
+    python3 -m pip install --no-cache-dir --break-system-packages gunicorn
 
 # Copy application code
 COPY . .
