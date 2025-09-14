@@ -6,7 +6,7 @@ class Command(BaseCommand):
     help = 'Scan Modbus registers to find correct addresses'
     
     def add_arguments(self, parser):
-        parser.add_argument('--port', type=str, default='/dev/ttyUSB0', help='Serial port')
+        parser.add_argument('--port', type=str, default='/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_BG01CG7P-if00-port0', help='Serial port')
         parser.add_argument('--baudrate', type=int, default=9600, help='Baudrate')
         parser.add_argument('--start', type=int, default=0, help='Start address')
         parser.add_argument('--end', type=int, default=100, help='End address')

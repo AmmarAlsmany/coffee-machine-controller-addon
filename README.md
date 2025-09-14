@@ -39,7 +39,7 @@ Edit `coffee_machine_controller/settings.py`:
 
 ```python
 # Coffee Machine Settings
-COFFEE_MACHINE_PORT = 'COM4'  # Windows: 'COM4', Linux: '/dev/ttyUSB0'
+COFFEE_MACHINE_PORT = 'COM4'  # Windows: 'COM4', Linux: '/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_BG01CG7P-if00-port0'
 COFFEE_MACHINE_BAUDRATE = 9600
 ```
 
@@ -224,7 +224,7 @@ CMD ["gunicorn", "coffee_machine_controller.wsgi:application", "--bind", "0.0.0.
 Build and run:
 ```bash
 docker build -t coffee-controller .
-docker run -p 8000:8000 --device=/dev/ttyUSB0 coffee-controller
+docker run -p 8000:8000 --device=/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_BG01CG7P-if00-port0 coffee-controller
 ```
 
 ### Environment Variables
@@ -232,7 +232,7 @@ Set these in production:
 ```bash
 export DJANGO_SECRET_KEY='your-secret-key'
 export DJANGO_DEBUG=False
-export COFFEE_MACHINE_PORT='/dev/ttyUSB0'
+export COFFEE_MACHINE_PORT='/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_BG01CG7P-if00-port0'
 export COFFEE_MACHINE_BAUDRATE=9600
 ```
 

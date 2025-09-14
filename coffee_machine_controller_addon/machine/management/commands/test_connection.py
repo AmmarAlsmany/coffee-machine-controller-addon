@@ -7,7 +7,7 @@ class Command(BaseCommand):
     help = 'Test coffee machine connection'
     
     def add_arguments(self, parser):
-        parser.add_argument('--port', type=str, help='Serial port (e.g., COM4 or /dev/ttyUSB0)')
+        parser.add_argument('--port', type=str, help='Serial port (e.g., COM4 or /dev/serial/by-id/usb-FTDI_FT232R_USB_UART_BG01CG7P-if00-port0)')
         parser.add_argument('--baudrate', type=int, default=9600, help='Baudrate (default: 9600)')
     
     def handle(self, *args, **options):

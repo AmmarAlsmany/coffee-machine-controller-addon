@@ -6,7 +6,7 @@ class Command(BaseCommand):
     help = 'Debug Modbus communication with detailed diagnostics'
     
     def handle(self, *args, **options):
-        port = '/dev/ttyUSB0'
+        port = '/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_BG01CG7P-if00-port0'
         
         # Test 1: Basic connection with different timeouts
         self.stdout.write("=== Test 1: Connection with different timeouts ===")

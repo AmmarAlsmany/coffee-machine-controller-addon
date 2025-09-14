@@ -24,7 +24,7 @@ ports_description:
   8000/tcp: Web interface port
 
 options:
-  serial_port: "/dev/ttyUSB0"
+  serial_port: "/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_BG01CG7P-if00-port0"
   baudrate: 9600
   django_secret_key: "your-default-secret-key-change-this"
   debug: false
@@ -46,8 +46,8 @@ schema:
 image: "ghcr.io/ammaralsmany/coffee-machine-controller-addon/{arch}"
 
 devices:
-  - /dev/ttyUSB0
-  - /dev/ttyUSB1
+  - /dev/serial/by-id/usb-FTDI_FT232R_USB_UART_BG01CG7P-if00-port0
+  - /dev/serial/by-id/usb-FTDI_FT232R_USB_UART_BG01CG7P-if00-port0
   - /dev/ttyACM0
   - /dev/ttyAMA0
   - /dev/serial/by-id
@@ -57,7 +57,7 @@ udev: true
 environment:
   DJANGO_SECRET_KEY: "!secret coffee_secret_key"
   DJANGO_DEBUG: false
-  COFFEE_MACHINE_PORT: "/dev/ttyUSB0"
+  COFFEE_MACHINE_PORT: "/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_BG01CG7P-if00-port0"
   COFFEE_MACHINE_BAUDRATE: 9600
 
 map:

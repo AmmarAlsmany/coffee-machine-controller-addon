@@ -247,7 +247,7 @@
                 this.setButtonLoading(btn, true);
                 
                 // Get port and baudrate from form
-                const port = document.getElementById('portSelect')?.value || '/dev/ttyUSB0';
+                const port = document.getElementById('portSelect')?.value || '/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_BG01CG7P-if00-port0';
                 const baudrate = parseInt(document.getElementById('baudrateSelect')?.value || '9600');
                 
                 try {

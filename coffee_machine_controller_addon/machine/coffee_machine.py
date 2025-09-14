@@ -80,7 +80,7 @@ class LaSpazialeCoffeeMachine:
     
     def __init__(self, port=None, baudrate=None):
         """Initialize connection to LaSpaziale S50-QSS Robot"""
-        self.port = port or getattr(settings, 'COFFEE_MACHINE_PORT', '/dev/ttyUSB0')
+        self.port = port or getattr(settings, 'COFFEE_MACHINE_PORT', '/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_BG01CG7P-if00-port0')
         self.baudrate = baudrate or getattr(settings, 'COFFEE_MACHINE_BAUDRATE', 9600)
         
         try:

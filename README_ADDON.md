@@ -46,7 +46,7 @@ This Home Assistant Add-on provides a web interface to control LaSpaziale S50-DE
 ### Basic Configuration
 
 ```yaml
-serial_port: "/dev/ttyUSB0"
+serial_port: "/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_BG01CG7P-if00-port0"
 baudrate: 9600
 django_secret_key: "your-secure-random-secret-key"
 debug: false
@@ -57,7 +57,7 @@ log_level: "INFO"
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `serial_port` | `/dev/ttyUSB0` | Serial port connected to coffee machine |
+| `serial_port` | `/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_BG01CG7P-if00-port0` | Serial port connected to coffee machine |
 | `baudrate` | `9600` | Serial communication baud rate |
 | `django_secret_key` | auto-generated | Django secret key for security |
 | `debug` | `false` | Enable debug mode |
@@ -73,7 +73,7 @@ log_level: "INFO"
    ```bash
    # In Home Assistant SSH add-on:
    ls /dev/tty*
-   # Look for devices like /dev/ttyUSB0, /dev/ttyACM0, etc.
+   # Look for devices like /dev/serial/by-id/usb-FTDI_FT232R_USB_UART_BG01CG7P-if00-port0, /dev/ttyACM0, etc.
    ```
 
 3. **Configure Machine**:
@@ -153,7 +153,7 @@ rest_command:
 
 #### 1. Serial Port Not Found
 ```
-Error: Could not open port /dev/ttyUSB0
+Error: Could not open port /dev/serial/by-id/usb-FTDI_FT232R_USB_UART_BG01CG7P-if00-port0
 ```
 **Solution**:
 - Check hardware connections
@@ -172,7 +172,7 @@ Error: No response from coffee machine
 
 #### 3. Permission Denied
 ```
-Error: Permission denied: '/dev/ttyUSB0'
+Error: Permission denied: '/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_BG01CG7P-if00-port0'
 ```
 **Solution**: The add-on should handle permissions automatically, but if issues persist:
 - Restart the add-on

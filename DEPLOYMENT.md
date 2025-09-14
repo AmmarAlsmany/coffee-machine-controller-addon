@@ -145,7 +145,7 @@ Once tested, you can submit to community repositories:
 
 1. **Go to Add-on Configuration**:
    ```yaml
-   serial_port: "/dev/ttyUSB0"  # Your coffee machine port
+   serial_port: "/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_BG01CG7P-if00-port0"  # Your coffee machine port
    baudrate: 9600
    django_secret_key: "generate-a-secure-random-key-here"
    debug: false
@@ -159,7 +159,7 @@ Once tested, you can submit to community repositories:
    ```bash
    # In Home Assistant SSH Add-on:
    ls /dev/tty*
-   # Look for /dev/ttyUSB0, /dev/ttyACM0, etc.
+   # Look for /dev/serial/by-id/usb-FTDI_FT232R_USB_UART_BG01CG7P-if00-port0, /dev/ttyACM0, etc.
    ```
 
 3. **Generate a secure secret key**:
@@ -245,7 +245,7 @@ rest_command:
 # Supervisor → Coffee Machine Controller → Logs
 
 # Common issues:
-# 1. Serial port not found (/dev/ttyUSB0)
+# 1. Serial port not found (/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_BG01CG7P-if00-port0)
 # 2. Permission denied on serial port
 # 3. Coffee machine not in Modbus mode
 # 4. Wrong baudrate setting

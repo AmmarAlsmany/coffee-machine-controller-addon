@@ -37,7 +37,7 @@ def test_config(port, baudrate, parity, stopbits, timeout=2):
         return False
 
 # Test all common configurations
-port = '/dev/ttyUSB0'
+port = '/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_BG01CG7P-if00-port0'
 configs = [
     # baudrate, parity, stopbits
     (9600, 'N', 1),    # Default from documentation
