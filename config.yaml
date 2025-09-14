@@ -43,11 +43,12 @@ schema:
   admin_password: str?
   admin_email: email?
 
-image: "ghcr.io/ammaralsmany/coffee-machine-controller-addon/{arch}"
+# Commented out until Docker images are built on GitHub
+# image: "ghcr.io/ammaralsmany/coffee-machine-controller-addon/{arch}"
 
 devices:
-  - /dev/serial/by-id/usb-FTDI_FT232R_USB_UART_BG01CG7P-if00-port0
-  - /dev/serial/by-id/usb-FTDI_FT232R_USB_UART_BG01CG7P-if00-port0
+  - /dev/ttyUSB0
+  - /dev/ttyUSB1
   - /dev/ttyACM0
   - /dev/ttyAMA0
   - /dev/serial/by-id
