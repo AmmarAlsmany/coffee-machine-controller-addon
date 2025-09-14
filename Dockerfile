@@ -19,6 +19,9 @@ RUN apk update && apk add --no-cache \
     curl \
     bash \
     git \
+    build-base \
+    cargo \
+    rust \
     && rm -rf /var/cache/apk/*
 
 # Set work directory
@@ -29,7 +32,7 @@ COPY requirements.txt ./
 
 # Upgrade pip and install Python dependencies
 RUN python3 -m pip install --no-cache-dir --upgrade pip setuptools wheel && \
-    python3 -m pip install --no-cache-dir -r requirements.txt && \
+    python3 -m pip install --no-cache-dir --timeout=300 -r requirements.txt && \
     python3 -m pip install --no-cache-dir gunicorn
 
 # Copy application code
