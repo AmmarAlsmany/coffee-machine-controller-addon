@@ -1,0 +1,632 @@
+<!-- templates/base.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Coffee Machine Controller{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #8B4513;
+            --secondary-color: #D2691E;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --info-color: #17a2b8;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+            color: var(--primary-color) !important;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-header {
+            border-radius: 15px 15px 0 0 !important;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            font-weight: 600;
+        }
+        
+        .btn-coffee {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            color: white;
+            border-radius: 25px;
+            padding: 10px 20px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-coffee:hover {
+            transform: scale(1.05);
+            color: white;
+            box-shadow: 0 5px 15px rgba(139, 69, 19, 0.4);
+        }
+        
+        .status-indicator {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-connected {
+            background-color: var(--success-color);
+        }
+        
+        .status-disconnected {
+            background-color: var(--danger-color);
+        }
+        
+        .status-busy {
+            background-color: var(--warning-color);
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .coffee-group {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 15px 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .coffee-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .loading {
+            display: none;
+        }
+        
+        .loading.show {
+            display: inline-block;
+        }
+        
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-coffee me-2"></i>Coffee Machine Controller
+            </a>
+            
+            <div class="navbar-nav ms-auto">
+                <div class="nav-item">
+                    <span id="connectionStatus" class="nav-link">
+                        <span class="status-indicator status-disconnected"></span>
+                        Disconnected
+                    </span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-4">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container"></div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript with cache busting -->
+    <script>
+        class CoffeeMachineController {
+            constructor() {
+                this.isConnected = false;
+                this.statusUpdateInterval = null;
+                // Detect if we're running locally or through a proxy
+                this.apiBaseUrl = this.getApiBaseUrl();
+                this.init();
+            }
+            
+            getApiBaseUrl() {
+                // Check if we're running through a proxy by looking at the current URL
+                const currentPath = window.location.pathname;
+                
+                // If the path contains /proxy/8000/, we're running through the proxy
+                if (currentPath.includes('/proxy/8000/')) {
+                    // Extract the base path up to and including /proxy/8000
+                    const match = currentPath.match(/(.*\/proxy\/8000)/);
+                    if (match) {
+                        const basePath = match[1];
+                        console.log('API Base URL (proxy):', basePath);
+                        return basePath;
+                    }
+                }
+                
+                // For local development or direct access
+                console.log('API Base URL: Using relative URLs (empty string)');
+                return '';
+            }
+            
+            init() {
+                this.bindEvents();
+                this.updateStatus();
+                this.startStatusUpdates();
+            }
+            
+            bindEvents() {
+                // Connection buttons
+                document.getElementById('connectBtn')?.addEventListener('click', () => this.connect());
+                document.getElementById('disconnectBtn')?.addEventListener('click', () => this.disconnect());
+                
+                // Coffee delivery buttons using data attributes
+                document.querySelectorAll('.coffee-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const button = e.currentTarget;
+                        
+                        // Get group and type from data attributes
+                        const group = button.dataset.group;
+                        const type = button.dataset.type;
+                        
+                        console.log('Coffee button clicked:', { 
+                            buttonId: button.id,
+                            group: group, 
+                            type: type 
+                        });
+                        
+                        if (!group || !type) {
+                            console.error('Missing data attributes on button:', button);
+                            this.showToast('Error', 'Button configuration error', 'error');
+                            return;
+                        }
+                        
+                        this.deliverCoffee(group, type, button);
+                    });
+                });
+                
+                // Control buttons
+                document.querySelectorAll('.stop-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const button = e.currentTarget;
+                        const group = button.dataset.group;
+                        this.stopDelivery(group, button);
+                    });
+                });
+                
+                document.querySelectorAll('.purge-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const button = e.currentTarget;
+                        const group = button.dataset.group;
+                        this.startPurge(group, button);
+                    });
+                });
+                
+                // Health check button
+                document.getElementById('healthCheckBtn')?.addEventListener('click', () => this.healthCheck());
+            }
+            
+            async connect() {
+                const btn = document.getElementById('connectBtn');
+                this.setButtonLoading(btn, true);
+                
+                // Get port and baudrate from form
+                const port = document.getElementById('portSelect')?.value || '/dev/ttyUSB0';
+                const baudrate = parseInt(document.getElementById('baudrateSelect')?.value || '9600');
+                
+                try {
+                    const url = this.apiBaseUrl + '/api/connect/';
+                    console.log('Connecting to:', url);
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': this.getCSRFToken()
+                        },
+                        body: JSON.stringify({
+                            port: port,
+                            baudrate: baudrate
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.showToast('Success', 'Connected to coffee machine', 'success');
+                        this.isConnected = true;
+                        this.updateConnectionStatus();
+                        this.updateStatus();
+                    } else {
+                        this.showToast('Error', data.message, 'error');
+                    }
+                } catch (error) {
+                    this.showToast('Error', 'Failed to connect to coffee machine', 'error');
+                } finally {
+                    this.setButtonLoading(btn, false);
+                }
+            }
+            
+            async disconnect() {
+                const btn = document.getElementById('disconnectBtn');
+                this.setButtonLoading(btn, true);
+                
+                try {
+                    const response = await fetch(this.apiBaseUrl + '/api/disconnect/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': this.getCSRFToken()
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.showToast('Success', 'Disconnected from coffee machine', 'success');
+                        this.isConnected = false;
+                        this.updateConnectionStatus();
+                    } else {
+                        this.showToast('Error', data.message, 'error');
+                    }
+                } catch (error) {
+                    this.showToast('Error', 'Failed to disconnect from coffee machine', 'error');
+                } finally {
+                    this.setButtonLoading(btn, false);
+                }
+            }
+            
+            async deliverCoffee(group, type, button) {
+                console.log('deliverCoffee called with:', { group, type });
+                
+                if (!this.isConnected) {
+                    this.showToast('Error', 'Please connect to the coffee machine first', 'error');
+                    return;
+                }
+                
+                this.setButtonLoading(button, true);
+                
+                // Create request data with proper type conversion
+                const requestData = {
+                    group_number: parseInt(group),  // Ensure it's a number
+                    coffee_type: type
+                };
+                
+                // Try sending as URL parameters as a workaround for proxy issues
+                const params = new URLSearchParams({
+                    group: group,
+                    type: type
+                });
+                
+                const url = this.apiBaseUrl + '/api/deliver/?' + params.toString();
+                const requestBody = JSON.stringify(requestData);
+                
+                console.log('Request URL with params:', url);
+                console.log('Request Body:', requestBody);
+                console.log('Request Data:', requestData);
+                
+                try {
+                    // Send with URL parameters (for proxy compatibility)
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: requestBody,
+                        credentials: 'include'
+                    });
+                    
+                    const data = await response.json();
+                    console.log('Response status:', response.status);
+                    console.log('Response data:', data);
+                    
+                    if (data.success) {
+                        this.showToast('Success', data.message, 'success');
+                        this.updateStatus();
+                    } else {
+                        this.showToast('Error', data.message || data.error || 'Failed to deliver coffee', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error in deliverCoffee:', error);
+                    this.showToast('Error', 'Failed to deliver coffee', 'error');
+                } finally {
+                    this.setButtonLoading(button, false);
+                }
+            }
+            
+            async stopDelivery(group, button) {
+                this.setButtonLoading(button, true);
+                
+                // Add URL parameters for proxy compatibility
+                const params = new URLSearchParams({ group: group });
+                const url = this.apiBaseUrl + '/api/stop/?' + params.toString();
+                
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            group_number: parseInt(group)
+                        }),
+                        credentials: 'include'
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.showToast('Success', data.message, 'success');
+                        this.updateStatus();
+                    } else {
+                        this.showToast('Error', data.message, 'error');
+                    }
+                } catch (error) {
+                    this.showToast('Error', 'Failed to stop delivery', 'error');
+                } finally {
+                    this.setButtonLoading(button, false);
+                }
+            }
+            
+            async startPurge(group, button) {
+                this.setButtonLoading(button, true);
+                
+                // Add URL parameters for proxy compatibility
+                const params = new URLSearchParams({ group: group });
+                const url = this.apiBaseUrl + '/api/purge/?' + params.toString();
+                
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            group_number: parseInt(group)
+                        }),
+                        credentials: 'include'
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.showToast('Success', data.message, 'success');
+                        this.updateStatus();
+                    } else {
+                        this.showToast('Error', data.message, 'error');
+                    }
+                } catch (error) {
+                    this.showToast('Error', 'Failed to start purge', 'error');
+                } finally {
+                    this.setButtonLoading(button, false);
+                }
+            }
+            
+            async healthCheck() {
+                const btn = document.getElementById('healthCheckBtn');
+                this.setButtonLoading(btn, true);
+                
+                try {
+                    const response = await fetch(this.apiBaseUrl + '/api/health/');
+                    const data = await response.json();
+                    
+                    if (data.overall_status === 'healthy') {
+                        this.showToast('Health Check', 'Machine is healthy', 'success');
+                    } else {
+                        this.showToast('Health Check', 'Issues detected: ' + data.errors.join(', '), 'warning');
+                    }
+                    
+                    this.updateHealthStatus(data);
+                } catch (error) {
+                    this.showToast('Error', 'Failed to perform health check', 'error');
+                } finally {
+                    this.setButtonLoading(btn, false);
+                }
+            }
+            
+            async updateStatus() {
+                try {
+                    const [infoResponse, statusResponse] = await Promise.all([
+                        fetch(this.apiBaseUrl + '/api/info/'),
+                        fetch(this.apiBaseUrl + '/api/status/')
+                    ]);
+                    
+                    if (infoResponse.ok) {
+                        const info = await infoResponse.json();
+                        this.updateMachineInfo(info);
+                        this.isConnected = info.connection_status;
+                        this.updateConnectionStatus();
+                    }
+                    
+                    if (statusResponse.ok) {
+                        const status = await statusResponse.json();
+                        this.updateGroupsStatus(status);
+                    }
+                } catch (error) {
+                    console.error('Error updating status:', error);
+                }
+            }
+            
+            updateMachineInfo(info) {
+                document.getElementById('serialNumber').textContent = info.serial_number || 'N/A';
+                document.getElementById('firmwareVersion').textContent = info.firmware_version || 'N/A';
+                document.getElementById('numberOfGroups').textContent = info.number_of_groups || 'N/A';
+                document.getElementById('machineBlocked').textContent = info.is_blocked ? 'Yes' : 'No';
+                document.getElementById('machineBlocked').className = `badge ${info.is_blocked ? 'bg-danger' : 'bg-success'}`;
+            }
+            
+            updateGroupsStatus(status) {
+                Object.keys(status.groups).forEach(groupKey => {
+                    const groupData = status.groups[groupKey];
+                    const groupNum = groupKey.split('_')[1];
+                    
+                    // Update group status indicators
+                    const statusElement = document.getElementById(`group${groupNum}Status`);
+                    const isBusy = groupData.is_busy;
+                    const hasFault = groupData.sensor_fault;
+                    
+                    if (statusElement) {
+                        statusElement.innerHTML = `
+                            <span class="status-indicator ${isBusy ? 'status-busy' : 'status-connected'}"></span>
+                            ${isBusy ? 'Busy' : 'Ready'}
+                            ${hasFault ? '<i class="fas fa-exclamation-triangle text-warning ms-2"></i>' : ''}
+                        `;
+                    }
+                    
+                    // Update purge countdown
+                    const countdownElement = document.getElementById(`group${groupNum}Countdown`);
+                    if (countdownElement) {
+                        countdownElement.textContent = `${groupData.purge_countdown}s`;
+                    }
+                    
+                    // Disable/enable buttons based on status
+                    const groupButtons = document.querySelectorAll(`[data-group="${groupNum}"]`);
+                    groupButtons.forEach(btn => {
+                        if (btn.classList.contains('coffee-btn')) {
+                            btn.disabled = isBusy || hasFault || !this.isConnected;
+                        }
+                    });
+                });
+            }
+            
+            updateConnectionStatus() {
+                const statusElement = document.getElementById('connectionStatus');
+                const connectBtn = document.getElementById('connectBtn');
+                const disconnectBtn = document.getElementById('disconnectBtn');
+                
+                if (this.isConnected) {
+                    statusElement.innerHTML = '<span class="status-indicator status-connected"></span>Connected';
+                    if (connectBtn) connectBtn.style.display = 'none';
+                    if (disconnectBtn) disconnectBtn.style.display = 'inline-block';
+                } else {
+                    statusElement.innerHTML = '<span class="status-indicator status-disconnected"></span>Disconnected';
+                    if (connectBtn) connectBtn.style.display = 'inline-block';
+                    if (disconnectBtn) disconnectBtn.style.display = 'none';
+                }
+            }
+            
+            startStatusUpdates() {
+                // Update status every 5 seconds
+                this.statusUpdateInterval = setInterval(() => {
+                    if (this.isConnected) {
+                        this.updateStatus();
+                    }
+                }, 5000);
+            }
+            
+            setButtonLoading(button, loading) {
+                if (!button) return;
+                
+                const loadingElement = button.querySelector('.loading');
+                const textElement = button.querySelector('.btn-text') || button;
+                
+                if (loading) {
+                    button.disabled = true;
+                    if (loadingElement) loadingElement.classList.add('show');
+                    const originalText = textElement.textContent;
+                    button.dataset.originalText = originalText;
+                    textElement.textContent = 'Processing...';
+                } else {
+                    button.disabled = false;
+                    if (loadingElement) loadingElement.classList.remove('show');
+                    const originalText = button.dataset.originalText;
+                    if (originalText) textElement.textContent = originalText;
+                }
+            }
+            
+            showToast(title, message, type) {
+                const toastContainer = document.querySelector('.toast-container');
+                const toastId = 'toast-' + Date.now();
+                
+                const bgClass = type === 'success' ? 'bg-success' : 
+                               type === 'error' ? 'bg-danger' : 
+                               type === 'warning' ? 'bg-warning' : 'bg-info';
+                
+                const toastHtml = `
+                    <div id="${toastId}" class="toast ${bgClass} text-white" role="alert">
+                        <div class="toast-header ${bgClass} text-white border-0">
+                            <strong class="me-auto">${title}</strong>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+                        </div>
+                        <div class="toast-body">
+                            ${message}
+                        </div>
+                    </div>
+                `;
+                
+                toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+                
+                const toastElement = document.getElementById(toastId);
+                const toast = new bootstrap.Toast(toastElement, { delay: 5000 });
+                toast.show();
+                
+                // Remove toast element after it's hidden
+                toastElement.addEventListener('hidden.bs.toast', () => {
+                    toastElement.remove();
+                });
+            }
+            
+            getCSRFToken() {
+                // Try to get CSRF token from cookie
+                const cookies = document.cookie.split(';');
+                for (let cookie of cookies) {
+                    const [name, value] = cookie.trim().split('=');
+                    if (name === 'csrftoken') {
+                        return value;
+                    }
+                }
+                // If no cookie, try to get from meta tag (Django template)
+                const token = document.querySelector('[name=csrfmiddlewaretoken]');
+                if (token) {
+                    return token.value;
+                }
+                console.warn('No CSRF token found');
+                return '';
+            }
+        }
+        
+        // Initialize controller when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            window.coffeeController = new CoffeeMachineController();
+        });
+    </script>
+</body>
+</html>

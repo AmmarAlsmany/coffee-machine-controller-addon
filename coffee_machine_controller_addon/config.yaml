@@ -1,0 +1,70 @@
+---
+name: Coffee Machine Controller
+version: "1.0.0"
+slug: coffee_machine_controller
+description: Control LaSpaziale S50-DEMO Robot coffee machines via Modbus RTU
+url: https://github.com/AmmarAlsmany/coffee_machine_controller
+startup: services
+arch:
+  - armhf
+  - armv7
+  - aarch64
+  - amd64
+  - i386
+
+init: false
+services:
+  - mysql:want
+  - mqtt:want
+
+ports:
+  8000/tcp: 8000
+
+ports_description:
+  8000/tcp: Web interface port
+
+options:
+  serial_port: "/dev/ttyUSB0"
+  baudrate: 9600
+  django_secret_key: "your-default-secret-key-change-this"
+  debug: false
+  log_level: "INFO"
+  admin_username: ""
+  admin_password: ""
+  admin_email: "admin@example.com"
+
+schema:
+  serial_port: str
+  baudrate: int
+  django_secret_key: str
+  debug: bool
+  log_level: list(DEBUG|INFO|WARNING|ERROR)?
+  admin_username: str?
+  admin_password: str?
+  admin_email: email?
+
+image: "ghcr.io/ammaralsmany/coffee-machine-controller-addon/{arch}"
+
+devices:
+  - /dev/ttyUSB0
+  - /dev/ttyUSB1
+  - /dev/ttyACM0
+  - /dev/ttyAMA0
+  - /dev/serial/by-id
+
+udev: true
+
+environment:
+  DJANGO_SECRET_KEY: "!secret coffee_secret_key"
+  DJANGO_DEBUG: false
+  COFFEE_MACHINE_PORT: "/dev/ttyUSB0"
+  COFFEE_MACHINE_BAUDRATE: 9600
+
+map:
+  - addon_config:rw
+  - share:rw
+  - ssl
+
+backup: full
+
+host_network: false
